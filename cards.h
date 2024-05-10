@@ -1,11 +1,13 @@
 #pragma once
 
+#include <cstdint>
+#include <iostream>
 
-using card_t = int;
+using card_t = uint8_t;
 
 /*
 万子牌 = 1~9
-筒子牌 = 21~29 
+筒子牌 = 21~29
 索子牌 = 41~49
 
 东 南 西 北 = 52 55 58 61
@@ -14,7 +16,13 @@ using card_t = int;
 梅、兰、竹、菊	= 85 88 91 94	　
 */
 
+const card_t CARD_MAX_VALUE = 100;
+
+struct grouped_card_t
+{
+    grouped_card_t(card_t _name, uint8_t _cnt) : cardname(_name), cardcnt(_cnt) {}
+    card_t cardname;
+    uint8_t cardcnt;
+};
 
 /*game type: 108 card game, 144, 152*/
-
-
