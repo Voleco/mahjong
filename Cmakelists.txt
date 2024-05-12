@@ -1,17 +1,17 @@
-cmake_minimum_required(VERSION 3.15)
-
-set(CMAKE_CXX_STANDARD 17)
+cmake_minimum_required(VERSION 3.6)
 
 project(mahjong_training)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 
 # Find packages go here.
 
-add_library(game_server game_server.cpp game_server.h)
+add_subdirectory(game)
 
-add_library(hand_evaluator hand_evaluator.cpp hand_evaluator.h)
+add_subdirectory(test_program)
 
 
-add_executable(sample sample.cpp)
-
-target_link_libraries(sample PUBLIC game_server hand_evaluator)
+add_subdirectory(gui)

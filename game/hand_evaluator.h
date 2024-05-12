@@ -4,7 +4,7 @@
 #include <algorithm>
 
 #include "cards.h"
-#include "util_helpers.h"
+#include "../utils/util_helpers.h"
 
 using hand_t = std::vector<card_t>;
 using subhand_t = std::vector<card_t>;

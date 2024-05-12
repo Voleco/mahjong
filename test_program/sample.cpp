@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "game_server.h"
-#include "hand_evaluator.h"
+#include "../game/game_server.h"
+#include "../game/hand_evaluator.h"
 
 void test1();
 
