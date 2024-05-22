@@ -35,7 +35,7 @@ void test1()
     {
         for (int i = 0; i < 9; i++)
         {
-            card_t cur_card = 20 * x + i + 1;
+            card_t cur_card = 10 * x + i + 1;
             for (int j = 0; j < 4; j++)
                 all_cards.push_back(cur_card);
         }
@@ -54,11 +54,16 @@ void test1()
     for (int i = 0; i < test_count; i++)
     {
         std::shuffle(all_cards.begin(), all_cards.end(), rng);
-        hand_t cur_hand = hand_t(all_cards.begin(), all_cards.begin() + 14);
+        hand_t cur_raw_hand = hand_t(all_cards.begin(), all_cards.begin() + 14);
 
+        // std::cout << "i= " << i << ", ";
+        // for (auto item : cur_hand)
+        //     std::cout << int(item) << " ";
+        // std::cout << "\n";
+        compact_hand_t cur_hand = to_compact_hand(cur_raw_hand);
         if (he.is_Win(cur_hand) == true)
         {
-            hand_win.push_back(cur_hand);
+            hand_win.push_back(cur_raw_hand);
             count_win++;
         }
     }
@@ -70,11 +75,11 @@ void test1()
 
     std::cout << count_win << " win out of " << test_count << "\n";
 
-    for (auto hand : hand_win)
-    {
-        std::sort(hand.begin(), hand.end());
-        for (auto item : hand)
-            std::cout << int(item) << " ";
-        std::cout << "\n";
-    }
+    // for (auto hand : hand_win)
+    // {
+    //     std::sort(hand.begin(), hand.end());
+    //     for (auto item : hand)
+    //         std::cout << int(item) << " ";
+    //     std::cout << "\n";
+    // }
 }
