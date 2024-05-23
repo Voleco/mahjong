@@ -40,7 +40,8 @@ bool Hand_Evaluator::has_4combo(const compact_hand_t &cards_12) const
 
         auto nbs = extract_combo(cur_state.hand);
         // int idx = first_non0(cur_state.hand);
-        // auto nbs = extract_meld(cur_state.hand,idx);
+        // // std::cout << "idx: " << idx;
+        // auto nbs = extract_meld(cur_state.hand, idx);
 
         for (auto &item : nbs)
             openlist.push_back(state(item, cur_state.combo2go - 1));
@@ -63,6 +64,8 @@ bool Hand_Evaluator::can_straight(const compact_hand_t &hand, int i) const
 
 bool Hand_Evaluator::can_triple(const compact_hand_t &hand, int i) const
 {
+    if (i >= hand.size())
+        return false;
     if (hand[i] >= 3)
         return true;
     return false;

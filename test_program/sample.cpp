@@ -23,7 +23,8 @@ void test1()
     Hand_Evaluator he;
     for (int i = 0; i < int(test_hands.size()); i++)
     {
-        if (he.is_Win(test_hands[i]))
+        compact_hand_t cur_hand = to_compact_hand(test_hands[i]);
+        if (he.is_Win(cur_hand))
         {
             std::cout << "hand " << i << " is win\n";
         }
