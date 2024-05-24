@@ -12,6 +12,8 @@ using compact_hand_t = std::vector<cardcnt>;
 
 compact_hand_t to_compact_hand(const hand_t &hand);
 
+void print_hand(const compact_hand_t& hand);
+
 class Hand_Evaluator
 {
 public:
@@ -22,19 +24,12 @@ public:
     void GetNeighbors(const compact_hand_t &hand, std::vector<compact_hand_t> &nbs) const;
 
 private:
-    bool has_4combo(const compact_hand_t &cards_12) const;
-    std::vector<compact_hand_t> extract_combo(const compact_hand_t &N_cards) const;
+    bool has_4melds(const compact_hand_t &cards_12) const;
 
     std::vector<compact_hand_t> extract_meld(const compact_hand_t &cards, int index) const;
 
-    /* if fisrt non 0 cnt card can form staright, return pos*/
+    /*fisrt non 0 cnt card */
     size_t first_non0(const compact_hand_t &hand) const;
-
-    /* if fisrt non 0 cnt card can form staright, return pos*/
-    size_t first_straght(const compact_hand_t &hand) const;
-
-    /* if fisrt non 0 cnt card can form triple, return pos*/
-    size_t fisrt_triple(const compact_hand_t &hand) const;
 
     bool can_straight(const compact_hand_t &hand, int index) const;
     bool can_triple(const compact_hand_t &hand, int index) const;
