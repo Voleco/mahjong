@@ -17,13 +17,13 @@ int main()
 
 void test1()
 {
-    std::vector<hand_t> test_hands = {{1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
-                                      {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
+    std::vector<std::vector<card_t>> test_hands = {{1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
+                                                   {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
 
     Hand_Evaluator he;
     for (int i = 0; i < int(test_hands.size()); i++)
     {
-        compact_hand_t cur_hand = to_compact_hand(test_hands[i]);
+        hand_t cur_hand = cards_to_hand(test_hands[i]);
         if (he.is_Win(cur_hand))
         {
             std::cout << "hand " << i << " is win\n";
@@ -44,6 +44,8 @@ void test1()
 
     int test_count = 1000000;
 
+    // int test_count = 0;
+
     int count_win = 0;
     std::vector<hand_t> hand_win;
 
@@ -55,13 +57,13 @@ void test1()
     for (int i = 0; i < test_count; i++)
     {
         std::shuffle(all_cards.begin(), all_cards.end(), rng);
-        hand_t cur_raw_hand = hand_t(all_cards.begin(), all_cards.begin() + 14);
+        std::vector<card_t> cur_raw_hand = std::vector<card_t>(all_cards.begin(), all_cards.begin() + 14);
 
         // std::cout << "i= " << i << ", ";
         // for (auto item : cur_hand)
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
-        compact_hand_t cur_hand = to_compact_hand(cur_raw_hand);
+        hand_t cur_hand = cards_to_hand(cur_raw_hand);
         if (he.is_Win(cur_hand) == true)
         {
             hand_win.push_back(cur_raw_hand);

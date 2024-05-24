@@ -1,13 +1,13 @@
 #include "hand_evaluator.h"
 
-void print_hand(const compact_hand_t &hand)
+void print_hand(const hand_t &hand)
 {
     for (int i = 0; i < int(hand.size()); i++)
         if (hand[i] > 0)
             std::cout << "(" << i << ", " << int(hand[i]) << ") ";
     std::cout << "\n";
 }
-compact_hand_t to_compact_hand(const hand_t &hand)
+hand_t cards_to_hand(const std::vector<card_t> &hand)
 {
     std::vector<cardcnt> init_hand(MAX_CARD_VALUE, 0);
     for (auto &item : hand)
@@ -15,21 +15,21 @@ compact_hand_t to_compact_hand(const hand_t &hand)
     return init_hand;
 }
 
-int Step2Win(const compact_hand_t &hand, const Hand_Evaluator *he_ptr)
+int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
 {
-    std::vector<compact_hand_t> path;
-    bool find_sol = BeamSearch<compact_hand_t, Hand_Evaluator>(
+    std::vector<hand_t> path;
+    bool find_sol = BeamSearch<hand_t, Hand_Evaluator>(
         hand, path, he_ptr, 10, 5);
 
     return 0;
 }
 
-bool Hand_Evaluator::has_4melds(const compact_hand_t &cards_12) const
+bool Hand_Evaluator::has_4melds(const hand_t &cards_12) const
 {
     struct state
     {
-        state(const compact_hand_t &hand_, uint8_t combo2go_) : hand(hand_), combo2go(combo2go_) {}
-        compact_hand_t hand;
+        state(const hand_t &hand_, uint8_t combo2go_) : hand(hand_), combo2go(combo2go_) {}
+        hand_t hand;
         uint8_t combo2go;
     };
 
@@ -58,7 +58,7 @@ bool Hand_Evaluator::has_4melds(const compact_hand_t &cards_12) const
     return false;
 }
 
-bool Hand_Evaluator::can_straight(const compact_hand_t &hand, int i) const
+bool Hand_Evaluator::can_straight(const hand_t &hand, int i) const
 {
     if (i >= hand.size() - 2)
         return false;
@@ -70,7 +70,7 @@ bool Hand_Evaluator::can_straight(const compact_hand_t &hand, int i) const
     return false;
 }
 
-bool Hand_Evaluator::can_triple(const compact_hand_t &hand, int i) const
+bool Hand_Evaluator::can_triple(const hand_t &hand, int i) const
 {
     if (i >= hand.size())
         return false;
@@ -79,7 +79,7 @@ bool Hand_Evaluator::can_triple(const compact_hand_t &hand, int i) const
     return false;
 }
 
-size_t Hand_Evaluator::first_non0(const compact_hand_t &hand) const
+size_t Hand_Evaluator::first_non0(const hand_t &hand) const
 {
     for (size_t i = 0; i < hand.size(); i++)
         if (hand[i] > 0)
@@ -87,9 +87,9 @@ size_t Hand_Evaluator::first_non0(const compact_hand_t &hand) const
     return hand.size();
 }
 
-std::vector<compact_hand_t> Hand_Evaluator::extract_meld(const compact_hand_t &cards, int index) const
+std::vector<hand_t> Hand_Evaluator::extract_meld(const hand_t &cards, int index) const
 {
-    std::vector<compact_hand_t> result;
+    std::vector<hand_t> result;
 
     if (can_straight(cards, index))
     {
@@ -108,7 +108,7 @@ std::vector<compact_hand_t> Hand_Evaluator::extract_meld(const compact_hand_t &c
     return result;
 }
 
-bool Hand_Evaluator::is_Win(const compact_hand_t &hand) const
+bool Hand_Evaluator::is_Win(const hand_t &hand) const
 {
     /*sp case 1: 7 pairs*/
     bool all_even = true;
@@ -147,7 +147,7 @@ bool Hand_Evaluator::is_Win(const compact_hand_t &hand) const
     return false;
 }
 
-int Hand_Evaluator::HCost(const compact_hand_t &hand) const
+int Hand_Evaluator::HCost(const hand_t &hand) const
 {
     /*h = 9 — 2*m — d + c — q
      m是面子数, d是搭子数, c是超载数, q是雀头
@@ -158,6 +158,6 @@ int Hand_Evaluator::HCost(const compact_hand_t &hand) const
     return 0;
 }
 
-void Hand_Evaluator::GetNeighbors(const compact_hand_t &hand, std::vector<compact_hand_t> &nbs) const
+void Hand_Evaluator::GetNeighbors(const hand_t &hand, std::vector<hand_t> &nbs) const
 {
 }

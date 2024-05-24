@@ -6,36 +6,34 @@
 #include "cards.h"
 #include "../utils/util_helpers.h"
 
-using hand_t = std::vector<card_t>;
-using subhand_t = std::vector<card_t>;
-using compact_hand_t = std::vector<cardcnt>;
+using hand_t = std::vector<cardcnt>;
 
-compact_hand_t to_compact_hand(const hand_t &hand);
+hand_t cards_to_hand(const std::vector<card_t> &hand);
 
-void print_hand(const compact_hand_t& hand);
+void print_hand(const hand_t& hand);
 
 class Hand_Evaluator
 {
 public:
     Hand_Evaluator() {}
     ~Hand_Evaluator() {}
-    bool is_Win(const compact_hand_t &hand) const;
-    int HCost(const compact_hand_t &hand) const;
-    void GetNeighbors(const compact_hand_t &hand, std::vector<compact_hand_t> &nbs) const;
+    bool is_Win(const hand_t &hand) const;
+    int HCost(const hand_t &hand) const;
+    void GetNeighbors(const hand_t &hand, std::vector<hand_t> &nbs) const;
 
 private:
-    bool has_4melds(const compact_hand_t &cards_12) const;
+    bool has_4melds(const hand_t &cards_12) const;
 
-    std::vector<compact_hand_t> extract_meld(const compact_hand_t &cards, int index) const;
+    std::vector<hand_t> extract_meld(const hand_t &cards, int index) const;
 
     /*fisrt non 0 cnt card */
-    size_t first_non0(const compact_hand_t &hand) const;
+    size_t first_non0(const hand_t &hand) const;
 
-    bool can_straight(const compact_hand_t &hand, int index) const;
-    bool can_triple(const compact_hand_t &hand, int index) const;
+    bool can_straight(const hand_t &hand, int index) const;
+    bool can_triple(const hand_t &hand, int index) const;
 };
 
 /// @brief steps to win. 0: win, 1: draw, 2: one to draw, 3: two to draw...
 /// @param hand 14 cards
 /// @return steps
-int Step2Win(const compact_hand_t &hand, const Hand_Evaluator *he_ptr);
+int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr);
