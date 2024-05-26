@@ -2,30 +2,42 @@
 
 void print_hand(const hand_t &hand)
 {
-    for (int i = 0; i < int(hand.size()); i++)
-        if (hand[i] > 0)
-            std::cout << "(" << i << ", " << int(hand[i]) << ") ";
+    // for (int i = 0; i < int(hand.cards.size()); i++)
+    //     if (hand[i] > 0)
+    //         std::cout << "(" << i << ", " << int(hand[i]) << ") ";
     std::cout << "\n";
 }
 hand_t cards_to_hand(const std::vector<card_t> &hand)
 {
-    std::vector<cardcnt> init_hand(MAX_CARD_VALUE, 0);
+    hand_t init_hand;
+    init_hand.hand_cnt = hand.size();
+    init_hand.cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
     for (auto &item : hand)
-        init_hand[item]++;
+        init_hand.cards[item]++;
     return init_hand;
 }
 
 int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
 {
-    std::vector<hand_t> path;
-    bool find_sol = BeamSearch<hand_t, Hand_Evaluator>(
-        hand, path, he_ptr, 10, 5);
+    // std::vector<hand_t> path;
+    // bool find_sol = BeamSearch<hand_t, Hand_Evaluator>(
+    //     hand, path, he_ptr, 10, 5);
 
     return 0;
 }
 
-bool Hand_Evaluator::has_4melds(const hand_t &cards_12) const
+std::vector<std::pair<hand_t, hand_t>> Hand_Evaluator::decomp_hand(
+    const hand_t &hand, int hand_cnt, int meld_cnt) const
 {
+    std::vector<std::pair<hand_t, hand_t>> res;
+
+    return res;
+}
+
+bool Hand_Evaluator::all_melds(const hand_t &cards) const
+{
+    if (cards.hand_cnt == 0)
+        return true;
     struct state
     {
         state(const hand_t &hand_, uint8_t combo2go_) : hand(hand_), combo2go(combo2go_) {}
@@ -34,7 +46,7 @@ bool Hand_Evaluator::has_4melds(const hand_t &cards_12) const
     };
 
     std::vector<state> openlist;
-    openlist.push_back(state(cards_12, 4));
+    openlist.push_back(state(cards, cards.hand_cnt / 3));
     while (openlist.size() > 0)
     {
         auto cur_state = openlist.back();
@@ -44,8 +56,7 @@ bool Hand_Evaluator::has_4melds(const hand_t &cards_12) const
         if (cur_state.combo2go == 0)
             return true;
 
-        // auto nbs = extract_combo(cur_state.hand);
-        int idx = first_non0(cur_state.hand);
+        int idx = first_non0<cardcnt>(cur_state.hand.cards);
         auto nbs = extract_meld(cur_state.hand, idx);
         // std::cout << "idx: " << idx << " nbs:\n ";
         // for (auto &item : nbs)
@@ -60,11 +71,10 @@ bool Hand_Evaluator::has_4melds(const hand_t &cards_12) const
 
 bool Hand_Evaluator::can_straight(const hand_t &hand, int i) const
 {
-    if (i >= hand.size() - 2)
+    if (i / 10 > 2 || i % 10 > 7)
         return false;
 
-    if (hand[i + 1] > 0 &&
-        hand[i + 2] > 0)
+    if (hand.cards[i] > 0 && hand.cards[i + 1] > 0 && hand.cards[i + 2] > 0)
         return true;
 
     return false;
@@ -72,19 +82,11 @@ bool Hand_Evaluator::can_straight(const hand_t &hand, int i) const
 
 bool Hand_Evaluator::can_triple(const hand_t &hand, int i) const
 {
-    if (i >= hand.size())
+    if (i >= hand.cards.size())
         return false;
-    if (hand[i] >= 3)
+    if (hand.cards[i] >= 3)
         return true;
     return false;
-}
-
-size_t Hand_Evaluator::first_non0(const hand_t &hand) const
-{
-    for (size_t i = 0; i < hand.size(); i++)
-        if (hand[i] > 0)
-            return i;
-    return hand.size();
 }
 
 std::vector<hand_t> Hand_Evaluator::extract_meld(const hand_t &cards, int index) const
@@ -94,15 +96,17 @@ std::vector<hand_t> Hand_Evaluator::extract_meld(const hand_t &cards, int index)
     if (can_straight(cards, index))
     {
         result.push_back(cards);
-        result.back()[index]--;
-        result.back()[index + 1]--;
-        result.back()[index + 2]--;
+        result.back().hand_cnt -= 3;
+        result.back().cards[index]--;
+        result.back().cards[index + 1]--;
+        result.back().cards[index + 2]--;
     }
 
     if (can_triple(cards, index))
     {
         result.push_back(cards);
-        result.back()[index] -= 3;
+        result.back().hand_cnt -= 3;
+        result.back().cards[index] -= 3;
     }
 
     return result;
@@ -111,34 +115,42 @@ std::vector<hand_t> Hand_Evaluator::extract_meld(const hand_t &cards, int index)
 bool Hand_Evaluator::is_Win(const hand_t &hand) const
 {
     /*sp case 1: 7 pairs*/
-    bool all_even = true;
-    for (auto item : hand)
-        if (item % 2 != 0)
-        {
-            all_even = false;
-            break;
-        }
+    if (hand.hand_cnt == 14)
+    {
+        bool all_even = true;
+        for (auto item : hand.cards)
+            if (item % 2 != 0)
+            {
+                all_even = false;
+                break;
+            }
 
-    if (all_even)
-        return true;
+        if (all_even)
+            return true;
+    }
 
     /*TODO sp case 2: 13yao*/
 
     /*regular case*/
+    if (hand.hand_cnt != 14 && hand.hand_cnt != 11 && hand.hand_cnt != 8 &&
+        hand.hand_cnt != 5 && hand.hand_cnt != 2)
+        return false;
 
     // atama_idxs
     std::vector<int> atama_candidates;
     for (int i = 0; i < MAX_CARD_VALUE; i++)
-        if (hand[i] >= 2)
+        if (hand.cards[i] >= 2)
             atama_candidates.push_back(i);
 
+    // int
     for (auto ac : atama_candidates)
     {
         // std::cout << "checking atama: " << int(card_group[idx].cardname) << "\n";
-        std::vector<cardcnt> candi_12cards = hand;
-        candi_12cards[ac] -= 2;
+        hand_t candi_melds = hand;
+        candi_melds.hand_cnt -= 2;
+        candi_melds.cards[ac] -= 2;
 
-        if (has_4melds(candi_12cards) == true)
+        if (all_melds(candi_melds) == true)
         {
             return true;
         }

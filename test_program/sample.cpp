@@ -47,7 +47,7 @@ void test1()
     // int test_count = 0;
 
     int count_win = 0;
-    std::vector<hand_t> hand_win;
+    std::vector<std::vector<card_t>> hand_win;
 
     std::random_device rd;
     std::mt19937 rng(rd());

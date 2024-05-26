@@ -19,7 +19,12 @@ using card_t = uint8_t;
 using cardcnt = uint8_t;
 const card_t MAX_CARD_VALUE = 30;
 
-const card_t CARD_MAX_VALUE = 100;
+struct hand_t
+{
+    std::vector<cardcnt> cards;
+    int hand_cnt;
+};
+// const card_t CARD_MAX_VALUE = 100;
 
 // struct grouped_card_t
 // {
