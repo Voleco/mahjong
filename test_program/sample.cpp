@@ -17,16 +17,48 @@ int main()
 
 void test1()
 {
-    std::vector<std::vector<card_t>> test_hands = {{1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
-                                                   {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
-
     Hand_Evaluator he;
-    for (int i = 0; i < int(test_hands.size()); i++)
+
     {
-        hand_t cur_hand = cards_to_hand(test_hands[i]);
-        if (he.is_Win(cur_hand))
+        std::vector<std::vector<card_t>> test_hands = {
+            {1, 1, 1, 2, 2},
+            {1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
+            {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
+
+        for (int i = 0; i < int(test_hands.size()); i++)
         {
-            std::cout << "hand " << i << " is win\n";
+            hand_t cur_hand = cards_to_hand(test_hands[i]);
+            if (he.is_Win(cur_hand))
+            {
+                std::cout << "hand " << i << " is win\n";
+            }
+        }
+    }
+
+    {
+        std::vector<std::vector<card_t>> test_hands = {
+            {1, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
+            {1, 1, 2, 2, 6, 6, 21, 22, 23, 24, 28, 28, 29, 29},
+            {1, 1, 2, 2, 6, 6, 6, 7, 8, 9, 25, 25, 27, 29}};
+
+        for (int i = 0; i < int(test_hands.size()); i++)
+        {
+
+            hand_t cur_hand = cards_to_hand(test_hands[i]);
+            auto res = he.decomp_hand(cur_hand);
+
+            std::cout << "cur hand:\n";
+            print_hand(cur_hand);
+            std::cout << "possible decompse: \n";
+            for (int x = 0; x < int(res.size()); x++)
+            {
+                std::cout << "decompose: " << x + 1 << "\n";
+                std::cout << "meld: ";
+                print_hand(res[x].first);
+                std::cout << "left: ";
+                print_hand(res[x].second);
+                std::cout << "\n";
+            }
         }
     }
 
@@ -64,6 +96,8 @@ void test1()
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
         hand_t cur_hand = cards_to_hand(cur_raw_hand);
+        // auto res = he.decomp_hand(cur_hand);
+
         if (he.is_Win(cur_hand) == true)
         {
             hand_win.push_back(cur_raw_hand);

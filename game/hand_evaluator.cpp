@@ -1,22 +1,5 @@
 #include "hand_evaluator.h"
 
-void print_hand(const hand_t &hand)
-{
-    // for (int i = 0; i < int(hand.cards.size()); i++)
-    //     if (hand[i] > 0)
-    //         std::cout << "(" << i << ", " << int(hand[i]) << ") ";
-    std::cout << "\n";
-}
-hand_t cards_to_hand(const std::vector<card_t> &hand)
-{
-    hand_t init_hand;
-    init_hand.hand_cnt = hand.size();
-    init_hand.cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
-    for (auto &item : hand)
-        init_hand.cards[item]++;
-    return init_hand;
-}
-
 int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
 {
     // std::vector<hand_t> path;
@@ -27,9 +10,119 @@ int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
 }
 
 std::vector<std::pair<hand_t, hand_t>> Hand_Evaluator::decomp_hand(
-    const hand_t &hand, int hand_cnt, int meld_cnt) const
+    const hand_t &hand) const
 {
     std::vector<std::pair<hand_t, hand_t>> res;
+
+    struct search_state
+    {
+        hand_t extracted_cards;
+        hand_t hand;
+    };
+
+    auto lam_isleaf = [&](const search_state &s)
+    {
+        for (int i = 0; i < (s.hand.cards.size()); i++)
+        {
+            if (can_straight(s.hand, i) == true ||
+                can_triple(s.hand, i) == true)
+                return false;
+        }
+        return true;
+    };
+
+    /*tpye == 1 triple; type == 2 straight*/
+    auto lam_extract = [](const search_state &s, int pos, int type)
+    {
+        search_state tmp = s;
+
+        if (type == 1)
+        {
+            tmp.extracted_cards.cards[pos] += 3;
+            tmp.hand.cards[pos] -= 3;
+        }
+        else if (type == 2)
+        {
+            tmp.extracted_cards.cards[pos]++;
+            tmp.extracted_cards.cards[pos + 1]++;
+            tmp.extracted_cards.cards[pos + 2]++;
+            tmp.hand.cards[pos]--;
+            tmp.hand.cards[pos + 1]--;
+            tmp.hand.cards[pos + 2]--;
+        }
+
+        tmp.hand.hand_cnt -= 3;
+        return tmp;
+    };
+
+    auto lam_getnbs = [&](const search_state &s, std::vector<search_state> &nbs)
+    {
+        for (int i = 0; i < (s.hand.cards.size()); i++)
+        {
+            if (s.hand.cards[i] == 4)
+            {
+                nbs.push_back(lam_extract(s, i, 1));
+                return;
+            }
+            else if (s.hand.cards[i] == 3)
+            {
+                nbs.push_back(lam_extract(s, i, 1));
+                if (can_straight(s.hand, i))
+                    nbs.push_back(lam_extract(s, i, 2));
+                return;
+            }
+            else
+            {
+                if (can_straight(s.hand, i))
+                {
+                    nbs.push_back(lam_extract(s, i, 2));
+                    if (can_straight(s.hand, i + 1) && s.hand.cards[i + 1] == 1)
+                        nbs.push_back(lam_extract(s, i + 1, 2));
+                    if (can_straight(s.hand, i + 2) && s.hand.cards[i + 2] == 1)
+                        nbs.push_back(lam_extract(s, i + 2, 2));
+                    return;
+                }
+            }
+        }
+    };
+
+    std::vector<search_state> leafnodes;
+
+    std::vector<search_state> openlist;
+    search_state start;
+    start.extracted_cards = init_hand();
+    start.hand = hand;
+    openlist.push_back(start);
+    while (openlist.size() > 0)
+    {
+        search_state cur_state = openlist.front();
+        // std::cout << "cur_state:\n";
+        // print_hand(cur_state.hand);
+        openlist.erase(openlist.begin());
+
+        if (lam_isleaf(cur_state))
+        {
+            // std::cout << "is leaf\n";
+            leafnodes.push_back(cur_state);
+            continue;
+        }
+        std::vector<search_state> nbs;
+        lam_getnbs(cur_state, nbs);
+        // std::cout << "nbs:\n";
+        for (auto &item : nbs)
+        {
+            // print_hand(item.hand);
+            openlist.push_back(item);
+        }
+    }
+
+    std::sort(leafnodes.begin(), leafnodes.end(), [](auto l, auto r)
+              { return l.hand.hand_cnt < r.hand.hand_cnt; });
+
+    for (auto item : leafnodes)
+        res.push_back(std::make_pair(item.extracted_cards, item.hand));
+    while (res.size() > 1 && res.back().second.hand_cnt > res.front().second.hand_cnt)
+        res.pop_back();
 
     return res;
 }

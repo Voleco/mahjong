@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include <vector>
 
 using card_t = uint8_t;
 
@@ -24,6 +25,32 @@ struct hand_t
     std::vector<cardcnt> cards;
     int hand_cnt;
 };
+
+inline void print_hand(const hand_t &hand)
+{
+    for (int i = 0; i < int(hand.cards.size()); i++)
+        if (hand.cards[i] > 0)
+            std::cout << "(" << i << ", " << int(hand.cards[i]) << ") ";
+    std::cout << "\n";
+}
+
+inline hand_t init_hand()
+{
+    hand_t res;
+    res.hand_cnt = 0;
+    res.cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
+    return res;
+}
+
+inline hand_t cards_to_hand(const std::vector<card_t> &cards)
+{
+    hand_t cur_hand = init_hand();
+    cur_hand.hand_cnt = cards.size();
+    for (auto &item : cards)
+        cur_hand.cards[item]++;
+    return cur_hand;
+}
+
 // const card_t CARD_MAX_VALUE = 100;
 
 // struct grouped_card_t
