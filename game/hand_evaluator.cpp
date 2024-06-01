@@ -9,122 +9,157 @@ int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
     return 0;
 }
 
-std::vector<std::pair<hand_t, hand_t>> Hand_Evaluator::decomp_hand(
-    const hand_t &hand) const
+bool Hand_Evaluator::is_leaf(const decomposed_hand<meld_t> &s) const
 {
-    std::vector<std::pair<hand_t, hand_t>> res;
-
-    struct search_state
+    auto &s_hand = s.remain_hand;
+    for (int i = 0; i < (s_hand.cards.size()); i++)
     {
-        hand_t extracted_cards;
-        hand_t hand;
-    };
+        if (can_straight(s_hand, i) == true ||
+            can_triple(s_hand, i) == true)
+            return false;
+    }
+    return true;
+}
 
-    auto lam_isleaf = [&](const search_state &s)
+bool Hand_Evaluator::is_leaf(const decomposed_hand<semi_meld_t> &s) const
+{
+    auto &s_hand = s.remain_hand;
+    for (int i = 0; i < (s_hand.cards.size()); i++)
     {
-        for (int i = 0; i < (s.hand.cards.size()); i++)
-        {
-            if (can_straight(s.hand, i) == true ||
-                can_triple(s.hand, i) == true)
-                return false;
-        }
-        return true;
-    };
+        if (can_semi_straight(s_hand, i) > 0 ||
+            can_semi_triple(s_hand, i) == true)
+            return false;
+    }
+    return true;
+}
 
-    /*tpye == 1 triple; type == 2 straight*/
-    auto lam_extract = [](const search_state &s, int pos, int type)
+/*tpye == 1 triple; type == 2 straight*/
+decomposed_hand<meld_t> Hand_Evaluator::extract_combo(
+    const decomposed_hand<meld_t> &s, int pos, int type) const
+{
+    decomposed_hand<meld_t> tmp = s;
+
+    if (type == 1)
     {
-        search_state tmp = s;
-
-        if (type == 1)
-        {
-            tmp.extracted_cards.cards[pos] += 3;
-            tmp.hand.cards[pos] -= 3;
-        }
-        else if (type == 2)
-        {
-            tmp.extracted_cards.cards[pos]++;
-            tmp.extracted_cards.cards[pos + 1]++;
-            tmp.extracted_cards.cards[pos + 2]++;
-            tmp.hand.cards[pos]--;
-            tmp.hand.cards[pos + 1]--;
-            tmp.hand.cards[pos + 2]--;
-        }
-
-        tmp.hand.hand_cnt -= 3;
-        return tmp;
-    };
-
-    auto lam_getnbs = [&](const search_state &s, std::vector<search_state> &nbs)
+        tmp.combos.push_back(
+            meld_t({card_t(pos), card_t(pos), card_t(pos)}));
+        tmp.remain_hand.cards[pos] -= 3;
+    }
+    else if (type == 2)
     {
-        for (int i = 0; i < (s.hand.cards.size()); i++)
-        {
-            if (s.hand.cards[i] == 4)
-            {
-                nbs.push_back(lam_extract(s, i, 1));
-                return;
-            }
-            else if (s.hand.cards[i] == 3)
-            {
-                nbs.push_back(lam_extract(s, i, 1));
-                if (can_straight(s.hand, i))
-                    nbs.push_back(lam_extract(s, i, 2));
-                return;
-            }
-            else
-            {
-                if (can_straight(s.hand, i))
-                {
-                    nbs.push_back(lam_extract(s, i, 2));
-                    if (can_straight(s.hand, i + 1) && s.hand.cards[i + 1] == 1)
-                        nbs.push_back(lam_extract(s, i + 1, 2));
-                    if (can_straight(s.hand, i + 2) && s.hand.cards[i + 2] == 1)
-                        nbs.push_back(lam_extract(s, i + 2, 2));
-                    return;
-                }
-            }
-        }
-    };
-
-    std::vector<search_state> leafnodes;
-
-    std::vector<search_state> openlist;
-    search_state start;
-    start.extracted_cards = init_hand();
-    start.hand = hand;
-    openlist.push_back(start);
-    while (openlist.size() > 0)
-    {
-        search_state cur_state = openlist.front();
-        // std::cout << "cur_state:\n";
-        // print_hand(cur_state.hand);
-        openlist.erase(openlist.begin());
-
-        if (lam_isleaf(cur_state))
-        {
-            // std::cout << "is leaf\n";
-            leafnodes.push_back(cur_state);
-            continue;
-        }
-        std::vector<search_state> nbs;
-        lam_getnbs(cur_state, nbs);
-        // std::cout << "nbs:\n";
-        for (auto &item : nbs)
-        {
-            // print_hand(item.hand);
-            openlist.push_back(item);
-        }
+        tmp.combos.push_back(
+            meld_t({card_t(pos), card_t(pos + 1), card_t(pos + 2)}));
+        tmp.remain_hand.cards[pos]--;
+        tmp.remain_hand.cards[pos + 1]--;
+        tmp.remain_hand.cards[pos + 2]--;
     }
 
-    std::sort(leafnodes.begin(), leafnodes.end(), [](auto l, auto r)
-              { return l.hand.hand_cnt < r.hand.hand_cnt; });
+    tmp.remain_hand.hand_cnt -= 3;
+    return tmp;
+}
 
-    for (auto item : leafnodes)
-        res.push_back(std::make_pair(item.extracted_cards, item.hand));
-    while (res.size() > 1 && res.back().second.hand_cnt > res.front().second.hand_cnt)
-        res.pop_back();
+void Hand_Evaluator::get_nbs(const decomposed_hand<meld_t> &s,
+                             std::vector<decomposed_hand<meld_t>> &nbs) const
+{
+    for (int i = 0; i < (s.remain_hand.cards.size()); i++)
+    {
+        if (s.remain_hand.cards[i] == 4)
+        {
+            nbs.push_back(extract_combo(s, i, 1));
+            return;
+        }
+        else if (s.remain_hand.cards[i] == 3)
+        {
+            nbs.push_back(extract_combo(s, i, 1));
+            if (can_straight(s.remain_hand, i))
+                nbs.push_back(extract_combo(s, i, 2));
+            return;
+        }
+        else
+        {
+            auto item_unique = [&](int idx)
+            {
+                return s.remain_hand.cards[idx] == 1;
+            };
+            if (can_straight(s.remain_hand, i))
+            {
+                nbs.push_back(extract_combo(s, i, 2));
+                if (can_straight(s.remain_hand, i + 1) &&
+                    (item_unique(i + 1) || item_unique(i + 2)))
+                    nbs.push_back(extract_combo(s, i + 1, 2));
+                if (can_straight(s.remain_hand, i + 2) &&
+                    item_unique(i + 2))
+                    nbs.push_back(extract_combo(s, i + 2, 2));
+                if (s.remain_hand.cards[i + 1] == 3)
+                    nbs.push_back(extract_combo(s, i + 1, 1));
+                if (s.remain_hand.cards[i + 2] == 3)
+                    nbs.push_back(extract_combo(s, i + 2, 1));
+                return;
+            }
+        }
+    }
+}
 
-    return res;
+decomposed_hand<semi_meld_t> Hand_Evaluator::extract_combo(
+    const decomposed_hand<semi_meld_t> &s, int pos, int type) const
+{
+    decomposed_hand<semi_meld_t> tmp = s;
+
+    if (type == 1)
+    {
+        tmp.combos.push_back(
+            semi_meld_t({card_t(pos), card_t(pos)}));
+        tmp.remain_hand.cards[pos] -= 2;
+    }
+    else if (type == 2)
+    {
+        tmp.combos.push_back(
+            semi_meld_t({card_t(pos), card_t(pos + 1)}));
+        tmp.remain_hand.cards[pos]--;
+        tmp.remain_hand.cards[pos + 1]--;
+    }
+    else if (type == 3)
+    {
+        tmp.combos.push_back(
+            semi_meld_t({card_t(pos), card_t(pos + 2)}));
+        tmp.remain_hand.cards[pos]--;
+        tmp.remain_hand.cards[pos + 2]--;
+    }
+
+    tmp.remain_hand.hand_cnt -= 2;
+    return tmp;
+}
+
+void Hand_Evaluator::get_nbs(const decomposed_hand<semi_meld_t> &s,
+                             std::vector<decomposed_hand<semi_meld_t>> &nbs) const
+{
+    for (int i = 0; i < (s.remain_hand.cards.size()); i++)
+    {
+        if (s.remain_hand.cards[i] == 2)
+        {
+            nbs.push_back(extract_combo(s, i, 1));
+            int type = can_semi_straight(s.remain_hand, i);
+            if (type > 0)
+                nbs.push_back(extract_combo(s, i, type + 1));
+            return;
+        }
+        else
+        {
+            int type = can_semi_straight(s.remain_hand, i);
+            if (type > 0)
+            {
+                nbs.push_back(extract_combo(s, i, type + 1));
+                int next_type = can_semi_straight(s.remain_hand, i + type);
+                if (next_type > 0 && s.remain_hand.cards[i + type] == 1)
+                    nbs.push_back(extract_combo(s, i + type, next_type + 1));
+
+                if (s.remain_hand.cards[i + type] == 2)
+                    nbs.push_back(extract_combo(s, i + type, 1));
+
+                return;
+            }
+        }
+    }
 }
 
 bool Hand_Evaluator::all_melds(const hand_t &cards) const
@@ -178,6 +213,35 @@ bool Hand_Evaluator::can_triple(const hand_t &hand, int i) const
     if (i >= hand.cards.size())
         return false;
     if (hand.cards[i] >= 3)
+        return true;
+    return false;
+}
+
+int Hand_Evaluator::can_semi_straight(const hand_t &hand, int i) const
+{
+    if (i / 10 > 2 || i % 10 > 8)
+        return 0;
+
+    if (i % 10 == 8)
+    {
+        if (hand.cards[i] > 0 && hand.cards[i + 1] > 0)
+            return 1;
+    }
+    else
+    {
+        if (hand.cards[i] > 0 && hand.cards[i + 1] > 0)
+            return 1;
+        if (hand.cards[i] > 0 && hand.cards[i + 2] > 0)
+            return 2;
+    }
+    return 0;
+}
+
+bool Hand_Evaluator::can_semi_triple(const hand_t &hand, int i) const
+{
+    if (i >= hand.cards.size())
+        return false;
+    if (hand.cards[i] >= 2)
         return true;
     return false;
 }

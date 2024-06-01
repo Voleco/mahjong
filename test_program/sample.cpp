@@ -27,7 +27,10 @@ void test1()
 
         for (int i = 0; i < int(test_hands.size()); i++)
         {
-            hand_t cur_hand = cards_to_hand(test_hands[i]);
+            hand_t cur_hand(test_hands[i]);
+
+            std::cout << "cur hand:\n";
+            std::cout << cur_hand.to_str() << "\n";
             if (he.is_Win(cur_hand))
             {
                 std::cout << "hand " << i << " is win\n";
@@ -44,19 +47,33 @@ void test1()
         for (int i = 0; i < int(test_hands.size()); i++)
         {
 
-            hand_t cur_hand = cards_to_hand(test_hands[i]);
-            auto res = he.decomp_hand(cur_hand);
+            hand_t cur_hand(test_hands[i]);
+            auto res = he.decomp_hand<meld_t>(cur_hand);
 
             std::cout << "cur hand:\n";
-            print_hand(cur_hand);
+            std::cout << cur_hand.to_str() << "\n";
             std::cout << "possible decompse: \n";
             for (int x = 0; x < int(res.size()); x++)
             {
                 std::cout << "decompose: " << x + 1 << "\n";
+
                 std::cout << "meld: ";
-                print_hand(res[x].first);
-                std::cout << "left: ";
-                print_hand(res[x].second);
+                for (auto md : res[x].combos)
+                    std::cout << md.to_str() << " ";
+                std::cout << "\nleft: ";
+                std::cout << res[x].remain_hand.to_str() << "\n";
+
+                std::cout << "deep decompose:\n";
+                auto dep_res = he.decomp_hand<semi_meld_t>(res[x].remain_hand);
+                for (int y = 0; y < int(dep_res.size()); y++)
+                {
+                    std::cout << "semi-meld: ";
+                    for (auto md : dep_res[y].combos)
+                        std::cout << md.to_str() << " ";
+                    std::cout << "\nleft: ";
+                    std::cout << dep_res[y].remain_hand.to_str() << "\n";
+                }
+
                 std::cout << "\n";
             }
         }
@@ -74,9 +91,9 @@ void test1()
         }
     }
 
-    int test_count = 1000000;
+    // int test_count = 1000000;
 
-    // int test_count = 0;
+    int test_count = 0;
 
     int count_win = 0;
     std::vector<std::vector<card_t>> hand_win;
@@ -95,7 +112,7 @@ void test1()
         // for (auto item : cur_hand)
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
-        hand_t cur_hand = cards_to_hand(cur_raw_hand);
+        hand_t cur_hand(cur_raw_hand);
         // auto res = he.decomp_hand(cur_hand);
 
         if (he.is_Win(cur_hand) == true)

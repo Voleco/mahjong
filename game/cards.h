@@ -20,44 +20,54 @@ using card_t = uint8_t;
 using cardcnt = uint8_t;
 const card_t MAX_CARD_VALUE = 30;
 
+struct meld_t
+{
+    std::string to_str();
+    card_t c1;
+    card_t c2;
+    card_t c3;
+};
+
+struct semi_meld_t
+{
+    std::string to_str();
+    card_t s1;
+    card_t s2;
+};
+
 struct hand_t
 {
+    hand_t();
+    hand_t(const std::vector<card_t> &_cards);
+    void init();
+    std::string to_str();
+
     std::vector<cardcnt> cards;
     int hand_cnt;
 };
 
-inline void print_hand(const hand_t &hand)
+template <typename T>
+struct decomposed_hand
 {
-    for (int i = 0; i < int(hand.cards.size()); i++)
-        if (hand.cards[i] > 0)
-            std::cout << "(" << i << ", " << int(hand.cards[i]) << ") ";
-    std::cout << "\n";
-}
+    std::string to_str();
 
-inline hand_t init_hand()
+    std::vector<T> combos;
+    hand_t remain_hand;
+};
+
+template <typename T>
+std::string decomposed_hand<T>::to_str()
 {
-    hand_t res;
-    res.hand_cnt = 0;
-    res.cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
+    std::string res = "combos:\n";
+    for (auto item : combos)
+        res += item.to_str() + " ";
+    res += "\nremaining cards:\n";
+    res += remain_hand.to_str() + "\n";
     return res;
 }
 
-inline hand_t cards_to_hand(const std::vector<card_t> &cards)
-{
-    hand_t cur_hand = init_hand();
-    cur_hand.hand_cnt = cards.size();
-    for (auto &item : cards)
-        cur_hand.cards[item]++;
-    return cur_hand;
-}
-
-// const card_t CARD_MAX_VALUE = 100;
-
-// struct grouped_card_t
-// {
-//     grouped_card_t(card_t _name, uint8_t _cnt) : cardname(_name), cardcnt(_cnt) {}
-//     card_t cardname;
-//     uint8_t cardcnt;
-// };
+// std::string meld_to_str(const meld_t &md);
+// std::string semi_meld_to_str(const semi_meld_t &md);
+// void print_hand(const hand_t &hand);
 
 /*game type: 108 card game, 144, 152*/

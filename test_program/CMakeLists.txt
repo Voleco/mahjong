@@ -8,4 +8,4 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(sample sample.cpp)
 
-target_link_libraries(sample PUBLIC game_server hand_evaluator)
+target_link_libraries(sample PUBLIC cards game_server hand_evaluator)
