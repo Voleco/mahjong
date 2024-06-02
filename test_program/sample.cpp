@@ -80,6 +80,7 @@ void test1()
 
     int count_win = 0;
     std::vector<std::vector<card_t>> hand_win;
+    std::vector<std::vector<card_t>> hand__1;
 
     std::random_device rd;
     std::mt19937 rng(rd());
@@ -98,17 +99,17 @@ void test1()
         // std::cout << "\n";
         hand_t cur_hand(cur_raw_hand);
 
-        // if (he.is_Win(cur_hand) == true)
-        // {
-        //     hand_win.push_back(cur_raw_hand);
-        //     count_win++;
-        // }
+        if (he.is_Win(cur_hand) == true)
+        {
+            hand_win.push_back(cur_raw_hand);
+            count_win++;
+        }
 
         int cur_h = he.HCost(cur_hand);
         distribution[cur_h + 1]++;
 
         if (cur_h == -1)
-            hand_win.push_back(cur_raw_hand);
+            hand__1.push_back(cur_raw_hand);
 
         // auto res = he.full_decomp_hand(cur_hand);
         // auto res = he.decomp_hand<meld_t>(cur_hand);
@@ -121,11 +122,21 @@ void test1()
 
     std::cout << "distribution:\n";
     for (int i = 0; i < distribution.size(); i++)
-        std::cout << i - 1 << "_to draw: " << distribution[i] << "\n";
+        std::cout << i - 1 << "_to draw: \t" << distribution[i] << "\n";
 
     std::cout << count_win << " win out of " << test_count << "\n";
 
+    std::cout << "hand win cnt:" << hand_win.size() << "\n";
     for (auto hand : hand_win)
+    {
+        std::sort(hand.begin(), hand.end());
+        for (auto item : hand)
+            std::cout << int(item) << " ";
+        std::cout << "\n";
+    }
+
+    std::cout << "hand h(-1) cnt:" << hand__1.size() << " \n";
+    for (auto hand : hand__1)
     {
         std::sort(hand.begin(), hand.end());
         for (auto item : hand)
