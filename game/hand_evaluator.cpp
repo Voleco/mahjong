@@ -34,7 +34,7 @@ bool Hand_Evaluator::is_leaf(const decomposed_hand<semi_meld_t> &s) const
 }
 
 /*tpye == 1 triple; type == 2 straight*/
-decomposed_hand<meld_t> Hand_Evaluator::extract_combo(
+decomposed_hand<meld_t> Hand_Evaluator::_extract_combo(
     const decomposed_hand<meld_t> &s, int pos, int type) const
 {
     decomposed_hand<meld_t> tmp = s;
@@ -58,21 +58,21 @@ decomposed_hand<meld_t> Hand_Evaluator::extract_combo(
     return tmp;
 }
 
-void Hand_Evaluator::get_nbs(const decomposed_hand<meld_t> &s,
-                             std::vector<decomposed_hand<meld_t>> &nbs) const
+void Hand_Evaluator::_get_nbs(const decomposed_hand<meld_t> &s,
+                              std::vector<decomposed_hand<meld_t>> &nbs) const
 {
     for (int i = 0; i < (s.remain_hand.cards.size()); i++)
     {
         if (s.remain_hand.cards[i] == 4)
         {
-            nbs.push_back(extract_combo(s, i, 1));
+            nbs.push_back(_extract_combo(s, i, 1));
             return;
         }
         else if (s.remain_hand.cards[i] == 3)
         {
-            nbs.push_back(extract_combo(s, i, 1));
+            nbs.push_back(_extract_combo(s, i, 1));
             if (can_straight(s.remain_hand, i))
-                nbs.push_back(extract_combo(s, i, 2));
+                nbs.push_back(_extract_combo(s, i, 2));
             return;
         }
         else
@@ -83,24 +83,24 @@ void Hand_Evaluator::get_nbs(const decomposed_hand<meld_t> &s,
             };
             if (can_straight(s.remain_hand, i))
             {
-                nbs.push_back(extract_combo(s, i, 2));
+                nbs.push_back(_extract_combo(s, i, 2));
                 if (can_straight(s.remain_hand, i + 1) &&
                     (item_unique(i + 1) || item_unique(i + 2)))
-                    nbs.push_back(extract_combo(s, i + 1, 2));
+                    nbs.push_back(_extract_combo(s, i + 1, 2));
                 if (can_straight(s.remain_hand, i + 2) &&
                     item_unique(i + 2))
-                    nbs.push_back(extract_combo(s, i + 2, 2));
+                    nbs.push_back(_extract_combo(s, i + 2, 2));
                 if (s.remain_hand.cards[i + 1] == 3)
-                    nbs.push_back(extract_combo(s, i + 1, 1));
+                    nbs.push_back(_extract_combo(s, i + 1, 1));
                 if (s.remain_hand.cards[i + 2] == 3)
-                    nbs.push_back(extract_combo(s, i + 2, 1));
+                    nbs.push_back(_extract_combo(s, i + 2, 1));
                 return;
             }
         }
     }
 }
 
-decomposed_hand<semi_meld_t> Hand_Evaluator::extract_combo(
+decomposed_hand<semi_meld_t> Hand_Evaluator::_extract_combo(
     const decomposed_hand<semi_meld_t> &s, int pos, int type) const
 {
     decomposed_hand<semi_meld_t> tmp = s;
@@ -130,17 +130,17 @@ decomposed_hand<semi_meld_t> Hand_Evaluator::extract_combo(
     return tmp;
 }
 
-void Hand_Evaluator::get_nbs(const decomposed_hand<semi_meld_t> &s,
-                             std::vector<decomposed_hand<semi_meld_t>> &nbs) const
+void Hand_Evaluator::_get_nbs(const decomposed_hand<semi_meld_t> &s,
+                              std::vector<decomposed_hand<semi_meld_t>> &nbs) const
 {
     for (int i = 0; i < (s.remain_hand.cards.size()); i++)
     {
         if (s.remain_hand.cards[i] == 2)
         {
-            nbs.push_back(extract_combo(s, i, 1));
+            nbs.push_back(_extract_combo(s, i, 1));
             int type = can_semi_straight(s.remain_hand, i);
             if (type > 0)
-                nbs.push_back(extract_combo(s, i, type + 1));
+                nbs.push_back(_extract_combo(s, i, type + 1));
             return;
         }
         else
@@ -148,13 +148,13 @@ void Hand_Evaluator::get_nbs(const decomposed_hand<semi_meld_t> &s,
             int type = can_semi_straight(s.remain_hand, i);
             if (type > 0)
             {
-                nbs.push_back(extract_combo(s, i, type + 1));
+                nbs.push_back(_extract_combo(s, i, type + 1));
                 int next_type = can_semi_straight(s.remain_hand, i + type);
                 if (next_type > 0 && s.remain_hand.cards[i + type] == 1)
-                    nbs.push_back(extract_combo(s, i + type, next_type + 1));
+                    nbs.push_back(_extract_combo(s, i + type, next_type + 1));
 
                 if (s.remain_hand.cards[i + type] == 2)
-                    nbs.push_back(extract_combo(s, i + type, 1));
+                    nbs.push_back(_extract_combo(s, i + type, 1));
 
                 return;
             }
@@ -316,6 +316,53 @@ bool Hand_Evaluator::is_Win(const hand_t &hand) const
     return false;
 }
 
+std::vector<full_DH> Hand_Evaluator::full_decomp_hand(const hand_t &hand) const
+{
+    std::vector<full_DH> dcp;
+
+    auto part1 = decomp_hand<meld_t>(hand);
+
+    for (int i = 0; i < int(part1.size()); i++)
+    {
+        auto part2 = decomp_hand<semi_meld_t>(part1[i].remain_hand);
+        if (part2.size() == 0)
+        {
+            full_DH tmp;
+            tmp.melds = part1[i].combos;
+            tmp.single_cards = part1[i].remain_hand.to_card();
+            tmp.has_atama = 0;
+            dcp.push_back(tmp);
+        }
+        for (int j = 0; j < int(part2.size()); j++)
+        {
+            auto ct_atama = [](const std::vector<semi_meld_t> &sms)
+            {
+                for (auto item : sms)
+                    if (item.s1 == item.s2)
+                        return 1;
+                return 0;
+            };
+
+            full_DH tmp;
+            tmp.melds = part1[i].combos;
+            tmp.semi_melds = part2[j].combos;
+            tmp.single_cards = part2[j].remain_hand.to_card();
+            tmp.has_atama = ct_atama(tmp.semi_melds);
+            dcp.push_back(tmp);
+        }
+    }
+    auto cmp_fdh = [](const full_DH &l, const full_DH &r)
+    {
+        /*has atama is better*/
+        if (l.single_cards.size() == l.single_cards.size())
+            return l.has_atama > r.has_atama;
+        return l.single_cards.size() < r.single_cards.size();
+    };
+    std::sort(dcp.begin(), dcp.end(), cmp_fdh);
+
+    return dcp;
+}
+
 int Hand_Evaluator::HCost(const hand_t &hand) const
 {
     /*h = 9 — 2*m — d + c — q
@@ -323,8 +370,24 @@ int Hand_Evaluator::HCost(const hand_t &hand) const
      c为超载数，当m+d≤5时，c=0，当m+d＞5时，c=m+d—5；
      q为雀头函数，m+d≤4时，q＝1，m+d＞4时，有雀头（对子）时，q=1，没有雀头时，q=0
      */
+    // if (is_Win(hand))
+    //     return 0;
 
-    return 0;
+    std::vector<full_DH> dcp = full_decomp_hand(hand);
+    full_DH &best_dch = dcp.front();
+    int m = best_dch.melds.size();
+    int d = best_dch.semi_melds.size();
+    int c = std::max(m + d - 5, 0);
+
+    int q;
+    if (m + d <= 4)
+        q = 1;
+    else
+        q = best_dch.has_atama;
+
+    int h = 9 - 2 * m - d + c - q;
+
+    return h;
 }
 
 void Hand_Evaluator::GetNeighbors(const hand_t &hand, std::vector<hand_t> &nbs) const

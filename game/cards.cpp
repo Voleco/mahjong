@@ -44,3 +44,30 @@ std::string hand_t::to_str()
                    std::to_string(cards[i]) + ") ";
     return res;
 }
+
+std::vector<card_t> hand_t::to_card()
+{
+    std::vector<card_t> res;
+    for (int i = 0; i < int(cards.size()); i++)
+        for (int j = 0; j < cards[i]; j++)
+            res.push_back(card_t(i));
+    return res;
+}
+
+std::string full_DH::to_str()
+{
+    std::string res = "melds: [";
+
+    for (auto md : melds)
+        res += md.to_str() + " ";
+    res += "]\n";
+    res += "semi-melds: [";
+    for (auto md : semi_melds)
+        res += md.to_str() + " ";
+    res += "]\n";
+    res += "single cards: [";
+    for (auto c : single_cards)
+        res += std::to_string(c) + " ";
+    res += "]";
+    return res;
+}

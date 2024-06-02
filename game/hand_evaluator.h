@@ -34,6 +34,8 @@ public:
     template <typename T>
     std::vector<decomposed_hand<T>> decomp_hand(const hand_t &hand) const;
 
+    std::vector<full_DH> full_decomp_hand(const hand_t &hand) const;
+
 private:
     bool all_melds(const hand_t &cards) const;
 
@@ -43,16 +45,16 @@ private:
     bool can_triple(const hand_t &hand, int index) const;
 
     bool is_leaf(const decomposed_hand<meld_t> &s) const;
-    decomposed_hand<meld_t> extract_combo(const decomposed_hand<meld_t> &s, int pos, int type) const;
-    void get_nbs(const decomposed_hand<meld_t> &s, std::vector<decomposed_hand<meld_t>> &nbs) const;
+    decomposed_hand<meld_t> _extract_combo(const decomposed_hand<meld_t> &s, int pos, int type) const;
+    void _get_nbs(const decomposed_hand<meld_t> &s, std::vector<decomposed_hand<meld_t>> &nbs) const;
 
     /*return 0: cannot, 1: adj e.g.{6,7}, 2: gap e.g.{3,5}*/
     int can_semi_straight(const hand_t &hand, int index) const;
     bool can_semi_triple(const hand_t &hand, int index) const;
 
     bool is_leaf(const decomposed_hand<semi_meld_t> &s) const;
-    decomposed_hand<semi_meld_t> extract_combo(const decomposed_hand<semi_meld_t> &s, int pos, int type) const;
-    void get_nbs(const decomposed_hand<semi_meld_t> &s, std::vector<decomposed_hand<semi_meld_t>> &nbs) const;
+    decomposed_hand<semi_meld_t> _extract_combo(const decomposed_hand<semi_meld_t> &s, int pos, int type) const;
+    void _get_nbs(const decomposed_hand<semi_meld_t> &s, std::vector<decomposed_hand<semi_meld_t>> &nbs) const;
 };
 
 template <typename T>
@@ -82,7 +84,7 @@ Hand_Evaluator::decomp_hand(const hand_t &hand) const
             continue;
         }
         std::vector<search_state> nbs;
-        get_nbs(cur_state, nbs);
+        _get_nbs(cur_state, nbs);
         // std::cout << "nbs:\n";
         for (auto &item : nbs)
         {

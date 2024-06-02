@@ -48,33 +48,16 @@ void test1()
         {
 
             hand_t cur_hand(test_hands[i]);
-            auto res = he.decomp_hand<meld_t>(cur_hand);
 
+            auto res = he.full_decomp_hand(cur_hand);
             std::cout << "cur hand:\n";
             std::cout << cur_hand.to_str() << "\n";
+            std::cout << "hcost: " << he.HCost(cur_hand) << "\n";
             std::cout << "possible decompse: \n";
-            for (int x = 0; x < int(res.size()); x++)
+            for (int i = 0; i < int(res.size()); i++)
             {
-                std::cout << "decompose: " << x + 1 << "\n";
-
-                std::cout << "meld: ";
-                for (auto md : res[x].combos)
-                    std::cout << md.to_str() << " ";
-                std::cout << "\nleft: ";
-                std::cout << res[x].remain_hand.to_str() << "\n";
-
-                std::cout << "deep decompose:\n";
-                auto dep_res = he.decomp_hand<semi_meld_t>(res[x].remain_hand);
-                for (int y = 0; y < int(dep_res.size()); y++)
-                {
-                    std::cout << "semi-meld: ";
-                    for (auto md : dep_res[y].combos)
-                        std::cout << md.to_str() << " ";
-                    std::cout << "\nleft: ";
-                    std::cout << dep_res[y].remain_hand.to_str() << "\n";
-                }
-
-                std::cout << "\n";
+                std::cout << "decompose: " << i + 1 << "\n";
+                std::cout << res[i].to_str() << "\n";
             }
         }
     }
@@ -91,9 +74,9 @@ void test1()
         }
     }
 
-    // int test_count = 1000000;
+    int test_count = 1000000;
 
-    int test_count = 0;
+    // int test_count = 0;
 
     int count_win = 0;
     std::vector<std::vector<card_t>> hand_win;
@@ -103,6 +86,7 @@ void test1()
 
     auto time1 = std::chrono::high_resolution_clock::now();
 
+    std::vector<int> distribution(10, 0);
     for (int i = 0; i < test_count; i++)
     {
         std::shuffle(all_cards.begin(), all_cards.end(), rng);
@@ -113,13 +97,21 @@ void test1()
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
         hand_t cur_hand(cur_raw_hand);
-        // auto res = he.decomp_hand(cur_hand);
 
-        if (he.is_Win(cur_hand) == true)
-        {
+        // if (he.is_Win(cur_hand) == true)
+        // {
+        //     hand_win.push_back(cur_raw_hand);
+        //     count_win++;
+        // }
+
+        int cur_h = he.HCost(cur_hand);
+        distribution[cur_h + 1]++;
+
+        if (cur_h == -1)
             hand_win.push_back(cur_raw_hand);
-            count_win++;
-        }
+
+        // auto res = he.full_decomp_hand(cur_hand);
+        // auto res = he.decomp_hand<meld_t>(cur_hand);
     }
 
     auto time2 = std::chrono::high_resolution_clock::now();
@@ -127,13 +119,17 @@ void test1()
     auto time_usage = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
     std::cout << "time usage: " << time_usage / 1000.0 << " s\n";
 
+    std::cout << "distribution:\n";
+    for (int i = 0; i < distribution.size(); i++)
+        std::cout << i - 1 << "_to draw: " << distribution[i] << "\n";
+
     std::cout << count_win << " win out of " << test_count << "\n";
 
-    // for (auto hand : hand_win)
-    // {
-    //     std::sort(hand.begin(), hand.end());
-    //     for (auto item : hand)
-    //         std::cout << int(item) << " ";
-    //     std::cout << "\n";
-    // }
+    for (auto hand : hand_win)
+    {
+        std::sort(hand.begin(), hand.end());
+        for (auto item : hand)
+            std::cout << int(item) << " ";
+        std::cout << "\n";
+    }
 }

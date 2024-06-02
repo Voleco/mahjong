@@ -11,10 +11,10 @@ using card_t = uint8_t;
 筒子牌 = 11~19
 索子牌 = 21~29
 
-东 南 西 北 = 52 55 58 61
-白 发 中 =  64 67 70
-春、夏、秋、冬	= 73 76 79 82	　
-梅、兰、竹、菊	= 85 88 91 94	　
+东 南 西 北 = 31 32 33 34
+白 发 中 =  35 36 37
+春、夏、秋、冬	= 41 42 43 44	　
+梅、兰、竹、菊	= 45 46 47 48	　
 */
 
 using cardcnt = uint8_t;
@@ -41,6 +41,7 @@ struct hand_t
     hand_t(const std::vector<card_t> &_cards);
     void init();
     std::string to_str();
+    std::vector<card_t> to_card();
 
     std::vector<cardcnt> cards;
     int hand_cnt;
@@ -66,8 +67,15 @@ std::string decomposed_hand<T>::to_str()
     return res;
 }
 
-// std::string meld_to_str(const meld_t &md);
-// std::string semi_meld_to_str(const semi_meld_t &md);
-// void print_hand(const hand_t &hand);
+/* full decomposed hand*/
+struct full_DH
+{
+    std::string to_str();
+
+    std::vector<meld_t> melds;
+    std::vector<semi_meld_t> semi_melds;
+    std::vector<card_t> single_cards;
+    int has_atama; /*semi_melds contains atama? yes: 1, no: 0*/
+};
 
 /*game type: 108 card game, 144, 152*/
