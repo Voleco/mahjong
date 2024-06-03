@@ -11,6 +11,10 @@ target_include_directories(cards PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
+add_library(deck deck.cpp deck.hpp)
+target_include_directories(deck PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
 
 add_library(game_server game_server.cpp game_server.h)
 target_include_directories(game_server PUBLIC
