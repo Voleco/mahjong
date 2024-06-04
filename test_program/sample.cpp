@@ -6,6 +6,7 @@
 
 #include "../game/game_server.h"
 #include "../game/hand_evaluator.h"
+#include "../game/deck.hpp"
 
 void test1();
 
@@ -76,27 +77,27 @@ void test1()
 
     int test_count = 1000000;
 
-    // int test_count = 0;
+    // int test_count = 10;
 
     int count_win = 0;
     std::vector<std::vector<card_t>> hand_win;
     std::vector<std::vector<card_t>> hand__1;
 
-    std::random_device rd;
-    std::mt19937 rng(rd());
+    Deck deck;
 
     auto time1 = std::chrono::high_resolution_clock::now();
 
     std::vector<int> distribution(10, 0);
     for (int i = 0; i < test_count; i++)
     {
-        std::shuffle(all_cards.begin(), all_cards.end(), rng);
-        std::vector<card_t> cur_raw_hand = std::vector<card_t>(all_cards.begin(), all_cards.begin() + 14);
+        deck.Shuffle_Cards();
+        std::vector<card_t> cur_raw_hand = deck.Deal_Multi_Cards(dc_mode::copy, 14);
 
         // std::cout << "i= " << i << ", ";
-        // for (auto item : cur_hand)
+        // for (auto item : cur_raw_hand)
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
+        
         hand_t cur_hand(cur_raw_hand);
 
         if (he.is_Win(cur_hand) == true)

@@ -15,7 +15,12 @@ enum class dc_mode
 class Deck
 {
 public:
-    Deck(std::random_device rd) : rng(rd()) { Reset(); }
+    Deck()
+    {
+        Reset();
+        std::random_device rd;
+        rng = std::mt19937(rd());
+    }
     ~Deck() {}
 
     void Reset();
