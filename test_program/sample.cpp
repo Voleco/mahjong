@@ -7,8 +7,11 @@
 #include "../game/game_server.h"
 #include "../game/hand_evaluator.h"
 #include "../game/deck.hpp"
+#include "../strategy/policy.hpp"
 
 void test1();
+
+void test2();
 
 int main()
 {
@@ -97,7 +100,7 @@ void test1()
         // for (auto item : cur_raw_hand)
         //     std::cout << int(item) << " ";
         // std::cout << "\n";
-        
+
         hand_t cur_hand(cur_raw_hand);
 
         if (he.is_Win(cur_hand) == true)
@@ -143,5 +146,27 @@ void test1()
         for (auto item : hand)
             std::cout << int(item) << " ";
         std::cout << "\n";
+    }
+}
+
+void test2()
+{
+    Deck deck;
+    int test_count = 10;
+
+    Policy ply;
+
+    for (int i = 0; i < test_count; i++)
+    {
+        deck.Shuffle_Cards();
+        std::vector<card_t> cur_raw_hand = deck.Deal_Multi_Cards(dc_mode::copy, 14);
+
+        // std::cout << "i= " << i << ", ";
+        // for (auto item : cur_raw_hand)
+        //     std::cout << int(item) << " ";
+        // std::cout << "\n";
+
+        hand_t cur_hand(cur_raw_hand);
+        auto ip_cards = ply.Get_Improving_Cards(cur_hand);
     }
 }

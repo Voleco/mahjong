@@ -1,13 +1,5 @@
 #include "hand_evaluator.h"
 
-int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr)
-{
-    // std::vector<hand_t> path;
-    // bool find_sol = BeamSearch<hand_t, Hand_Evaluator>(
-    //     hand, path, he_ptr, 10, 5);
-
-    return 0;
-}
 
 bool Hand_Evaluator::is_leaf(const decomposed_hand<meld_t> &s) const
 {

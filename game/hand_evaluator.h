@@ -4,9 +4,9 @@
 #include <algorithm>
 
 #include "cards.h"
+#include "deck.hpp"
 #include "../utils/util_helpers.h"
 
-// using hand_t = std::vector<cardcnt>;
 
 /*fisrt non 0 cnt card */
 template <typename T>
@@ -26,6 +26,7 @@ public:
 
     bool is_Win(const hand_t &hand) const;
     int HCost(const hand_t &hand) const;
+
     void GetNeighbors(const hand_t &hand, std::vector<hand_t> &nbs) const;
 
     /// @brief decomposite hand into maximal number of combos (melds/semi-melds)
@@ -102,8 +103,3 @@ Hand_Evaluator::decomp_hand(const hand_t &hand) const
 
     return res;
 }
-
-/// @brief steps to win. 0: win, 1: draw, 2: one to draw, 3: two to draw...
-/// @param hand 14 cards
-/// @return steps
-int Step2Win(const hand_t &hand, const Hand_Evaluator *he_ptr);

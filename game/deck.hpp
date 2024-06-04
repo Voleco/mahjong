@@ -29,8 +29,11 @@ public:
     std::vector<card_t> Deal_Multi_Cards(dc_mode mode, int n);
     void Take_Card(card_t c);
 
+    std::vector<card_t> Get_Possible_Cards() const;
+
 private:
     std::mt19937 rng;
     std::vector<card_t> remaining_cards;
     std::vector<card_t> taken_cards;
+    std::vector<cardcnt> stacked_remaining_cards; /*堆在一起的剩余牌*/
 };
