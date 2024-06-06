@@ -69,3 +69,30 @@ void Deck::Take_Card(card_t c)
             return;
         }
 }
+
+ResDeck::ResDeck(const hand_t &hand)
+{
+    stacked_remaining_cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
+    for (int x = 0; x < 3; x++)
+    {
+        for (int i = 0; i < 9; i++)
+        {
+            card_t cur_card = 10 * x + i + 1;
+            stacked_remaining_cards[cur_card] = 4 - hand.cards[cur_card];
+        }
+    }
+}
+
+void ResDeck::Take_Card(card_t c)
+{
+    stacked_remaining_cards[c]--;
+}
+
+std::vector<card_t> ResDeck::Get_Possible_Cards() const
+{
+    std::vector<card_t> res;
+    for (int i = 0; i < int(stacked_remaining_cards.size()); i++)
+        if (stacked_remaining_cards[i] > 0)
+            res.push_back(card_t(i));
+    return res;
+}

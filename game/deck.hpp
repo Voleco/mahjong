@@ -37,3 +37,16 @@ private:
     std::vector<card_t> taken_cards;
     std::vector<cardcnt> stacked_remaining_cards; /*堆在一起的剩余牌*/
 };
+
+class ResDeck
+{
+public:
+    ResDeck() = delete;
+    ResDeck(const hand_t &hand);
+    void Take_Card(card_t c);
+    std::vector<card_t> Get_Possible_Cards() const;
+    cardcnt Get_CardCnt(card_t c) const { return stacked_remaining_cards[c]; }
+
+private:
+    std::vector<cardcnt> stacked_remaining_cards; /*堆在一起的剩余牌*/
+};

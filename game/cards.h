@@ -20,9 +20,11 @@ using card_t = uint8_t;
 using cardcnt = uint8_t;
 const card_t MAX_CARD_VALUE = 30;
 
+std::string get_cardName(card_t c);
+
 struct meld_t
 {
-    std::string to_str();
+    std::string to_str() const;
     card_t c1;
     card_t c2;
     card_t c3;
@@ -30,7 +32,7 @@ struct meld_t
 
 struct semi_meld_t
 {
-    std::string to_str();
+    std::string to_str() const;
     card_t s1;
     card_t s2;
 };
@@ -40,8 +42,8 @@ struct hand_t
     hand_t();
     hand_t(const std::vector<card_t> &_cards);
     void init();
-    std::string to_str();
-    std::vector<card_t> to_card();
+    std::string to_str() const;
+    std::vector<card_t> to_card() const;
 
     std::vector<cardcnt> cards;
     int hand_cnt;
@@ -50,14 +52,14 @@ struct hand_t
 template <typename T>
 struct decomposed_hand
 {
-    std::string to_str();
+    std::string to_str() const;
 
     std::vector<T> combos;
     hand_t remain_hand;
 };
 
 template <typename T>
-std::string decomposed_hand<T>::to_str()
+std::string decomposed_hand<T>::to_str() const
 {
     std::string res = "combos:\n";
     for (auto item : combos)
@@ -70,7 +72,7 @@ std::string decomposed_hand<T>::to_str()
 /* full decomposed hand*/
 struct full_DH
 {
-    std::string to_str();
+    std::string to_str() const;
 
     std::vector<meld_t> melds;
     std::vector<semi_meld_t> semi_melds;

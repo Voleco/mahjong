@@ -1,18 +1,34 @@
 
 #include "cards.h"
 
-std::string semi_meld_t::to_str()
+std::string get_cardName(card_t c)
 {
-    std::string res = "(" + std::to_string(s1) +
-                      ", " + std::to_string(s2) + ")";
+    std::string res = "";
+    int rank = c % 10;
+    int type = c / 10;
+
+    res += std::to_string(rank);
+    if (type == 0)
+        res += "万";
+    else if (type == 1)
+        res += "筒";
+    else
+        res += "索";
     return res;
 }
 
-std::string meld_t::to_str()
+std::string semi_meld_t::to_str() const
 {
-    std::string res = "(" + std::to_string(c1) +
-                      ", " + std::to_string(c2) +
-                      ", " + std::to_string(c3) + ")";
+    std::string res = "(" + get_cardName(s1) +
+                      ", " + get_cardName(s2) + ")";
+    return res;
+}
+
+std::string meld_t::to_str() const
+{
+    std::string res = "(" + get_cardName(c1) +
+                      ", " + get_cardName(c2) +
+                      ", " + get_cardName(c3) + ")";
     return res;
 }
 
@@ -35,17 +51,17 @@ void hand_t::init()
     cards = std::vector<cardcnt>(MAX_CARD_VALUE, 0);
 }
 
-std::string hand_t::to_str()
+std::string hand_t::to_str() const
 {
     std::string res = "";
     for (int i = 0; i < int(cards.size()); i++)
         if (cards[i] > 0)
-            res += "(" + std::to_string(i) + " x " +
+            res += "(" + get_cardName(i) + " x " +
                    std::to_string(cards[i]) + ") ";
     return res;
 }
 
-std::vector<card_t> hand_t::to_card()
+std::vector<card_t> hand_t::to_card() const
 {
     std::vector<card_t> res;
     for (int i = 0; i < int(cards.size()); i++)
@@ -54,7 +70,7 @@ std::vector<card_t> hand_t::to_card()
     return res;
 }
 
-std::string full_DH::to_str()
+std::string full_DH::to_str() const
 {
     std::string res = "melds: [";
 
@@ -67,7 +83,7 @@ std::string full_DH::to_str()
     res += "]\n";
     res += "single cards: [";
     for (auto c : single_cards)
-        res += std::to_string(c) + " ";
+        res += get_cardName(c) + " ";
     res += "]";
     return res;
 }
