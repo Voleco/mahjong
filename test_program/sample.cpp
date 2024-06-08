@@ -182,16 +182,16 @@ void test2(int enough_count, int checking_H)
 
         int cur_h = he.HCost(cur_hand);
 
-        // if (cur_h == 0 || cur_h == 1)
-
         if (cur_h == checking_H)
         {
             std::cout << "cur_h: " << cur_h << " cur hand:\n";
-            std::cout << cur_hand.to_str() << "\n";
-            auto ip_cards = ply.Get_Improving_Cards(cur_hand);
+            std::cout << cur_hand.to_str() << "\n\n";
+            ResDeck resd(cur_hand);
+            auto ip_cards = ply.Get_Improving_Cards(cur_hand, resd);
             std::cout << "choice count: " << ip_cards.size() << ", good choices:\n";
             for (auto item : ip_cards)
                 std::cout << item.to_str() << "\n";
+            std::cout << "\n";
             enough++;
         }
     }
