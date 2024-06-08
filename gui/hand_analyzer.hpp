@@ -1,9 +1,9 @@
 #pragma once
 
 // #include <fmt/format.h>
-// #include <memory>
-// #include <variant>
-// namespace simu::logplay {
+#include <memory>
+#include <variant>
+
 
 // using GUIRobot = util::gui_robot::RobotOption;
 // using GUIRobotData = util::gui_robot::RobotData;
@@ -96,28 +96,6 @@
 //     std::string short_name;
 // };
 
-// struct VelocityData {
-//     void clear() {
-//         time_zero = {};
-//         t.clear();
-//         v.clear();
-//         w.clear();
-//         ut.clear();
-//         uv.clear();
-//         uw.clear();
-//         tl.clear();
-//         av.clear();
-//         aw.clear();
-//         uav.clear();
-//         uaw.clear();
-//         vlim.clear();
-//         wlim.clear();
-//         tick_last = -1;
-//     }
-//     bool empty() const {
-//         return t.empty() && ut.empty();
-//     }
-//     void on_info(int tick, const pdlog_util::NavLoopInfo& info);
 
 //     Time time_zero;
 //     int time_padding = 15; // seconds
@@ -205,8 +183,6 @@
 // };
 
 // void update_gui_state_from_data(SimuData& data, const RobotInfo& info);
-
-// } // namespace simu::logplay
 
 
 // struct SimLogPlayOption {

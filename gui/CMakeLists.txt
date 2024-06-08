@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
+
 project(gui_interface)
 
 
@@ -8,6 +9,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
 find_package(ImGui-SFML REQUIRED)
 
+add_executable(test_gui test_gui.cpp)
+
+target_link_libraries(test_gui
+        PUBLIC
+    ImGui-SFML::ImGui-SFML
+)
 # #find_package(OpenCV REQUIRED)
 # #include_directories(${OpenCV_INCLUDE_DIRS})
 
