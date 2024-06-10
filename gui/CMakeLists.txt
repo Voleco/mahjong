@@ -9,11 +9,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
 find_package(ImGui-SFML REQUIRED)
 
+add_library(elements elements.cpp elements.hpp)
+target_link_libraries(elements 
+    imgui_util cards
+)
+
 add_executable(test_gui test_gui.cpp)
 
 target_link_libraries(test_gui
-        PUBLIC
-    ImGui-SFML::ImGui-SFML
+    imgui_util       elements
 )
 # #find_package(OpenCV REQUIRED)
 # #include_directories(${OpenCV_INCLUDE_DIRS})
