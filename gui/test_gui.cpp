@@ -14,32 +14,14 @@
 
 int main()
 {
-    // gui_components::card_tile tile;
-    // tile.set_cardValue(1);
-    // // tile.setPrefix("../../resouces/images/theme1/");
-    // if (!tile.load("../../resouces/images/theme1/"))
-    //     return -1;
-
     gui_components::game_cards gui_cards;
     if (!gui_cards.load("../../resouces/images/theme1/"))
         return -1;
 
-    // // Assign it to a sprite
-    // sf::Sprite sprite;
-    // sprite.setTexture(texture);
-
-    // sf::Image image;
-    // image.loadFromFile("../resources/images/theme1/1.png");
-    // sf::Texture texture;
-    // texture.loadFromImage(image, area);
-
-    sf::RenderWindow window(sf::VideoMode(800, 600), "ImGui Util Demo");
+    sf::RenderWindow window(sf::VideoMode(1000, 800), "ImGui Util Demo");
     window.setFramerateLimit(60);
     if (!ImGui::SFML::Init(window))
         return -1;
-
-    // sf::CircleShape shape(100.f);
-    // shape.setFillColor(sf::Color::Green);
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -62,6 +44,8 @@ int main()
         ImGui::End();
 
         window.clear();
+        sf::Color bg_color(13, 152, 186);
+        window.clear(bg_color);
         // window.draw(shape);
         // window.draw(sprite);
         // window.draw(tile);

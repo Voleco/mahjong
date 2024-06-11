@@ -27,14 +27,10 @@ namespace gui_components
 
     bool game_cards::load(const std::string &prefix)
     {
-        int cnt = 0;
         for (int x = 0; x < 3; x++)
         {
             for (int i = 0; i < 9; i++)
             {
-                cnt++;
-                if (cnt > 3)
-                    return true;
                 card_t cur_card = 10 * x + i + 1;
                 all_cards[cur_card].set_cardValue(cur_card);
                 if (!all_cards[cur_card].load(prefix))
