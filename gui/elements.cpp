@@ -20,12 +20,12 @@ namespace gui_components
         return res;
     }
 
-    game_cards::game_cards()
+    game_card_factory::game_card_factory()
     {
         all_cards = std::vector<card_tile>(MAX_CARD_VALUE, card_tile());
     }
 
-    bool game_cards::load(const std::string &prefix)
+    bool game_card_factory::load(const std::string &prefix)
     {
         for (int x = 0; x < 3; x++)
         {

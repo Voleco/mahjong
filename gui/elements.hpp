@@ -28,12 +28,12 @@ namespace gui_components
         // std::string prefix;
     };
 
-    class game_cards
+    class game_card_factory
     {
     public:
-        game_cards();
+        game_card_factory();
         bool load(const std::string &prefix);
-        card_tile get_tile(card_t c) { return card_tile(all_cards[c]); }
+        card_tile make_tile(card_t c) const { return card_tile(all_cards[c]); }
 
     private:
         std::vector<card_tile> all_cards;
