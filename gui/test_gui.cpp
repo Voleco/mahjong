@@ -15,6 +15,10 @@
 void render_top_cards(sf::RenderWindow *win_ptr,
                       const gui_components::game_card_factory &card_fac);
 
+void render_bot_hand(sf::RenderWindow *win_ptr,
+                     const gui_components::game_card_factory &card_fac,
+                     const gui_components::Card_Slot &selected_cards);
+
 int main()
 {
     gui_components::game_card_factory gui_cards;
@@ -28,8 +32,21 @@ int main()
 
     sf::Clock deltaClock;
 
+    gui_components::Card_Slot selected;
+    selected.Replace(0, 1);
+    selected.Replace(1, 4);
+    selected.Replace(2, 16);
+    selected.Replace(3, 16);
+    selected.Replace(5, 21);
+    selected.Replace(8, 25);
+
     ImGui::SetNextWindowSize(ImVec2(400, 200));
     ImGui::SetNextWindowPos(ImVec2(100, 400)); // Set the position of the new window
+
+    // let's define a view
+    sf::View view(sf::FloatRect(0, 0, 1000, 800));
+    // activate it
+    window.setView(view);
 
     while (window.isOpen())
     {
@@ -45,6 +62,13 @@ int main()
             if (event.type == sf::Event::Closed)
             {
                 window.close();
+            }
+            // catch the resize events
+            if (event.type == sf::Event::Resized)
+            {
+                // update the view to the new size of the window
+                sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+                window.setView(sf::View(visibleArea));
             }
         }
 
@@ -63,7 +87,18 @@ int main()
         sf::Color bg_color(13, 152, 186);
         window.clear(bg_color);
 
+        /* view approach start*/
+
+        // draw something to that view
         render_top_cards(&window, gui_cards);
+        render_bot_hand(&window, gui_cards, selected);
+
+        // want to do visibility checks? retrieve the view
+        sf::View currentView = window.getView();
+
+        /*end*/
+
+        // render_top_cards(&window, gui_cards);
 
         ImGui::SFML::Render(window);
         window.display();
@@ -79,30 +114,48 @@ void render_top_cards(sf::RenderWindow *win_ptr,
 {
     sf::Vector2u win_size = win_ptr->getSize();
 
-    // int dx = win_size.x / 10;
-    int dx = 100;
+    int dx = std::min(int(win_size.x) / 10, 200);
+    int init_x = std::max(50, (int((win_size.x) - 9 * dx) / 2));
     int dy = 90;
 
-    // std::cout << "winzise: " << win_size.x << ", " << win_size.y << "\n";
-    // std::cout << "dx: " << dx << ", " << "dy: " << dy << "\n";
     for (int i = 0; i < 3; i++)
     {
         for (int j = 1; j < 10; j++)
         {
             card_t c = i * 10 + j;
             gui_components::card_tile cur_tile = card_fac.make_tile(c);
-            float posx = (j - 1) * dx + dx / 2;
+            float posx = (j - 1) * dx + init_x;
             float posy = i * dy + 10;
-            // std::cout << "i: " << i << ", " << "j: " << j << "\n";
-            // std::cout << "posx: " << posx << ", " << "posy: " << posy << "\n";
+
+            // cur_tile.setScale(sf::Vector2f(1, 1));
             cur_tile.setPosition(posx, posy);
             win_ptr->draw(cur_tile);
         }
     }
-    // gui_components::card_tile c1 = gui_cards.get_tile(1);
-    // gui_components::card_tile c2 = gui_cards.get_tile(2);
-    // c1.setPosition(50, 70);
-    // c2.setPosition(100, 70);
-    //     window.draw(c1);
-    // window.draw(c2);
+
+}
+
+void render_bot_hand(sf::RenderWindow *win_ptr,
+                     const gui_components::game_card_factory &card_fac,
+                     const gui_components::Card_Slot &selected_cards)
+{
+    sf::Vector2u win_size = win_ptr->getSize();
+
+    int dx = std::min(int(win_size.x) / 14, 100);
+    int init_x = std::max(50, (int((win_size.x) - 15 * dx) / 2));
+    int y = int(win_size.y) - 150;
+
+    for (int i = 0; i < int(selected_cards.partial_hand.size()); i++)
+    {
+        card_t c = selected_cards.partial_hand[i];
+        if (c == 0)
+            continue;
+        gui_components::card_tile cur_tile = card_fac.make_tile(c);
+        float posx = i * dx + init_x;
+        float posy = y;
+        // std::cout << "i: " << i << "\n";
+        // std::cout << "posx: " << posx << ", " << "posy: " << posy << "\n";
+        cur_tile.setPosition(posx, posy);
+        win_ptr->draw(cur_tile);
+    }
 }

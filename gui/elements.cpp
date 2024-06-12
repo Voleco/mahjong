@@ -8,7 +8,7 @@ namespace gui_components
         if (!texture.loadFromFile(prefix + fname))
             return false;
 
-        setSize(sf::Vector2f(35.f, 47.f));
+        setSize(sf::Vector2f(70.f, 94.f));
         setTexture(&texture);
         return true;
     }

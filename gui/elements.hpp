@@ -39,6 +39,17 @@ namespace gui_components
         std::vector<card_tile> all_cards;
     };
 
+    class Card_Slot
+    {
+    public:
+        Card_Slot() { Reset(); }
+        void Reset() { partial_hand = std::vector<card_t>(14, 0); }
+        void Replace(int idx, card_t c) { partial_hand[idx] = c; }
+        void Remove(int idx) { partial_hand[idx] = 0; }
+
+    // private:
+        std::vector<card_t> partial_hand;
+    };
 }
 
 // class MyEntity : public sf::Drawable, public sf::Transformable
