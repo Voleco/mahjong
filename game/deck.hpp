@@ -30,7 +30,8 @@ public:
     void Take_Card(card_t c);
 
     std::vector<card_t> Get_Possible_Cards() const;
-
+    cardcnt Get_CardCnt(card_t c) const { return stacked_remaining_cards[c]; }
+    
 private:
     std::mt19937 rng;
     std::vector<card_t> remaining_cards;

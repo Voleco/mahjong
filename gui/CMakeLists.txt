@@ -17,7 +17,7 @@ target_link_libraries(elements
 add_executable(test_gui test_gui.cpp)
 
 target_link_libraries(test_gui
-    imgui_util       elements
+    imgui_util       elements deck
 )
 # #find_package(OpenCV REQUIRED)
 # #include_directories(${OpenCV_INCLUDE_DIRS})
