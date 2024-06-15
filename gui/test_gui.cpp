@@ -13,35 +13,46 @@
 
 #include "../game/deck.hpp"
 #include "elements.hpp"
+#include "resource_factory.hpp"
 
 void render_top_cards(sf::RenderWindow *win_ptr,
-                      const gui_components::game_card_factory &card_fac,
-                      const std::vector<sf::Font> &fonts,
+                      const Resource_Factory &rsc_fac,
                       const Deck &cur_deck);
 
 void render_bot_hand(sf::RenderWindow *win_ptr,
-                     const gui_components::game_card_factory &card_fac,
+                     const Resource_Factory &rsc_fac,
                      const gui_components::Card_Slot &selected_cards);
 
 int main()
 {
-    gui_components::game_card_factory gui_cards;
-    if (!gui_cards.load("../../resouces/images/theme1/"))
+    Resource_Factory resource_fac;
+    if (!resource_fac.LoadResources("default"))
         return -1;
-
-    sf::Font font1;
-    if (!font1.loadFromFile("../../resouces/fonts/Sans_Serif.ttf"))
-        return -1;
-    sf::Font font2;
-    if (!font2.loadFromFile("../../resouces/fonts/CrimsonText_SemiBold.ttf"))
-        return -1;
-
-    std::vector<sf::Font> fonts = {font1, font2};
 
     sf::RenderWindow window(sf::VideoMode(1000, 800), "ImGui Util Demo");
     window.setFramerateLimit(60);
     if (!ImGui::SFML::Init(window))
         return -1;
+
+    std::string font_file = "../../resouces/fonts/NotoSansSC_Regular.ttf";
+    ImFontConfig cfg;
+    cfg.MergeMode = false;
+    cfg.OversampleH = 2;
+    cfg.OversampleV = 2;
+    ImGuiIO &io = ImGui::GetIO();
+    io.Fonts->Clear();
+    io.Fonts->AddFontFromFileTTF(
+        font_file.c_str(), 20, &cfg,
+        io.Fonts->GetGlyphRangesDefault());
+    cfg.MergeMode = true;
+    io.Fonts->AddFontFromFileTTF(
+        font_file.c_str(), 20.0f, &cfg,
+        io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    io.Fonts->Build();
+    if (!ImGui::SFML::UpdateFontTexture()) {
+        std::cout << "Error: update font texture failed\n";
+        return -1;
+    }
 
     sf::Clock deltaClock;
 
@@ -100,7 +111,7 @@ int main()
         bool show_memu = true;
 
         ImGui::Begin("Memu", &show_memu);
-        ImGui::Button("Look at this pretty button");
+        ImGui::Button("重置牌堆");
         ImGui::End();
 
         window.clear();
@@ -109,22 +120,14 @@ int main()
 
         /* view approach start*/
 
-        sf::Font font;
-        if (!font.loadFromFile("../../resouces/fonts/CrimsonText_SemiBold.ttf"))
-        {
-            std::cout << "error font\n";
-        }
-
         // draw something to that view
-        render_top_cards(&window, gui_cards, fonts, deck);
-        render_bot_hand(&window, gui_cards, selected);
+        render_top_cards(&window, resource_fac, deck);
+        render_bot_hand(&window, resource_fac, selected);
 
         // want to do visibility checks? retrieve the view
         sf::View currentView = window.getView();
 
         /*end*/
-
-        // render_top_cards(&window, gui_cards);
 
         ImGui::SFML::Render(window);
         window.display();
@@ -136,8 +139,7 @@ int main()
 }
 
 void render_top_cards(sf::RenderWindow *win_ptr,
-                      const gui_components::game_card_factory &card_fac,
-                      const std::vector<sf::Font> &fonts,
+                      const Resource_Factory &rsc_fac,
                       const Deck &cur_deck)
 {
     sf::Vector2u win_size = win_ptr->getSize();
@@ -151,7 +153,7 @@ void render_top_cards(sf::RenderWindow *win_ptr,
         for (int j = 1; j < 10; j++)
         {
             card_t c = i * 10 + j;
-            gui_components::card_tile cur_tile = card_fac.make_tile(c);
+            gui_components::card_tile cur_tile = rsc_fac.MakeTile(c);
             float posx = (j - 1) * dx + init_x;
             float posy = i * dy + 10;
 
@@ -162,7 +164,7 @@ void render_top_cards(sf::RenderWindow *win_ptr,
             int cnt = cur_deck.Get_CardCnt(c);
             sf::Text cross;
             cross.setPosition(posx + 70, posy + 30);
-            cross.setFont(fonts[0]);
+            cross.setFont(rsc_fac.GetSymbolFont());
             cross.setString("x");
             cross.setCharacterSize(30);
             cross.setFillColor(sf::Color::Black);
@@ -171,7 +173,7 @@ void render_top_cards(sf::RenderWindow *win_ptr,
 
             sf::Text text_cnt;
             text_cnt.setPosition(posx + 90, posy);
-            text_cnt.setFont(fonts[1]);
+            text_cnt.setFont(rsc_fac.GetNumFont());
             text_cnt.setString(std::to_string(cnt));
             text_cnt.setCharacterSize(70);
             text_cnt.setFillColor(sf::Color::Black);
@@ -184,7 +186,7 @@ void render_top_cards(sf::RenderWindow *win_ptr,
 }
 
 void render_bot_hand(sf::RenderWindow *win_ptr,
-                     const gui_components::game_card_factory &card_fac,
+                     const Resource_Factory &rsc_fac,
                      const gui_components::Card_Slot &selected_cards)
 {
     sf::Vector2u win_size = win_ptr->getSize();
@@ -198,7 +200,7 @@ void render_bot_hand(sf::RenderWindow *win_ptr,
         card_t c = selected_cards.partial_hand[i];
         if (c == 0)
             continue;
-        gui_components::card_tile cur_tile = card_fac.make_tile(c);
+        gui_components::card_tile cur_tile = rsc_fac.MakeTile(c);
         float posx = i * dx + init_x;
         float posy = y;
         // std::cout << "i: " << i << "\n";

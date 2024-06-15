@@ -1,4 +1,5 @@
 
+#pragma once
 #include <string>
 #include <map>
 
@@ -26,17 +27,6 @@ namespace gui_components
         card_t card_value;
         sf::Texture texture;
         // std::string prefix;
-    };
-
-    class game_card_factory
-    {
-    public:
-        game_card_factory();
-        bool load(const std::string &prefix);
-        card_tile make_tile(card_t c) const { return card_tile(all_cards[c]); }
-
-    private:
-        std::vector<card_tile> all_cards;
     };
 
     class Card_Slot

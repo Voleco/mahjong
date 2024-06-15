@@ -14,10 +14,15 @@ target_link_libraries(elements
     imgui_util cards
 )
 
+add_library(resource_factory resource_factory.cpp resource_factory.hpp)
+target_link_libraries(resource_factory 
+    imgui_util cards elements
+)
+
 add_executable(test_gui test_gui.cpp)
 
 target_link_libraries(test_gui
-    imgui_util       elements deck
+    imgui_util    deck elements resource_factory
 )
 # #find_package(OpenCV REQUIRED)
 # #include_directories(${OpenCV_INCLUDE_DIRS})
