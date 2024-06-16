@@ -26,6 +26,7 @@ namespace gui_components
             if (partial_hand[i] == 0)
             {
                 partial_hand[i] = c;
+                valid_cnt++;
                 return true;
             }
         return false;

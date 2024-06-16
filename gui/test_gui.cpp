@@ -27,6 +27,8 @@ struct control_signals
 {
     bool reset_deck = false;
     bool sort_hand = false;
+    int rand_hand_type = 0;
+    bool gen_rand_hand = 0;
 };
 
 int main()
@@ -124,6 +126,31 @@ int main()
         ImGui::Begin("Memu", &show_memu);
         ctrl_sigs.reset_deck = ImGui::Button("重置牌堆", ImVec2(100, 50));
         ctrl_sigs.sort_hand = ImGui::Button("整理手牌", ImVec2(100, 50));
+
+        ImGui::Text("选择牌型: ");
+        ImGui::SameLine();
+
+        std::vector<std::string> items = {"任意", "听牌", "一上听", "两上听"};
+        if (ImGui::BeginCombo("##combo", items[ctrl_sigs.rand_hand_type].c_str(),
+                              128 /*WidthFitPreview*/))
+        {
+            for (int i = 0; i < int(items.size()); i++)
+            {
+                bool is_selected = (i == ctrl_sigs.rand_hand_type);
+                if (ImGui::Selectable(items[i].c_str(), is_selected))
+                    ctrl_sigs.rand_hand_type = i;
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        ctrl_sigs.gen_rand_hand = ImGui::Button("生成手牌");
+        // ImGui::BeginGroup();
+        // ImGui::Button("Alpha");
+        // ImGui::Button("Beta");
+        // ImGui::EndGroup();
         ImGui::End();
 
         /*handle signals start*/
@@ -140,6 +167,17 @@ int main()
             ctrl_sigs.sort_hand = false;
         }
 
+        if (ctrl_sigs.gen_rand_hand == true)
+        {
+            deck.Reset();
+            selected.Reset();
+            deck.Shuffle_Cards();
+            auto hand = deck.Deal_Multi_Cards(dc_mode::take, 14);
+            for (auto c : hand)
+                selected.Add(c);
+            selected.Sort();
+            ctrl_sigs.gen_rand_hand = false;
+        }
         /*handle signals end*/
 
         window.clear();
