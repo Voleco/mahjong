@@ -33,12 +33,28 @@ namespace gui_components
     {
     public:
         Card_Slot() { Reset(); }
-        void Reset() { partial_hand = std::vector<card_t>(14, 0); }
-        void Replace(int idx, card_t c) { partial_hand[idx] = c; }
-        void Remove(int idx) { partial_hand[idx] = 0; }
+        void Reset()
+        {
+            partial_hand = std::vector<card_t>(14, 0);
+            valid_cnt = 0;
+        }
+        bool Add(card_t c);
+        void Replace(int idx, card_t c)
+        {
+            if (partial_hand[idx] == 0)
+                valid_cnt++;
+            partial_hand[idx] = c;
+        }
+        void Remove(int idx)
+        {
+            partial_hand[idx] = 0;
+            valid_cnt--;
+        }
+        void Sort();
 
-    // private:
+        // private:
         std::vector<card_t> partial_hand;
+        int valid_cnt;
     };
 }
 

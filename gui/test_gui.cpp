@@ -23,13 +23,23 @@ void render_bot_hand(sf::RenderWindow *win_ptr,
                      const Resource_Factory &rsc_fac,
                      const gui_components::Card_Slot &selected_cards);
 
+struct control_signals
+{
+    bool reset_deck = false;
+    bool sort_hand = false;
+};
+
 int main()
 {
+    control_signals ctrl_sigs;
+    int init_width = 1600;
+    int init_heigh = 1000;
+
     Resource_Factory resource_fac;
     if (!resource_fac.LoadResources("default"))
         return -1;
 
-    sf::RenderWindow window(sf::VideoMode(1000, 800), "ImGui Util Demo");
+    sf::RenderWindow window(sf::VideoMode(init_width, init_heigh), "ImGui Util Demo");
     window.setFramerateLimit(60);
     if (!ImGui::SFML::Init(window))
         return -1;
@@ -49,7 +59,8 @@ int main()
         font_file.c_str(), 20.0f, &cfg,
         io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
     io.Fonts->Build();
-    if (!ImGui::SFML::UpdateFontTexture()) {
+    if (!ImGui::SFML::UpdateFontTexture())
+    {
         std::cout << "Error: update font texture failed\n";
         return -1;
     }
@@ -75,7 +86,7 @@ int main()
     ImGui::SetNextWindowPos(ImVec2(100, 400)); // Set the position of the new window
 
     // let's define a view
-    sf::View view(sf::FloatRect(0, 0, 1000, 800));
+    sf::View view(sf::FloatRect(0, 0, init_width, init_heigh));
     // activate it
     window.setView(view);
 
@@ -111,8 +122,25 @@ int main()
         bool show_memu = true;
 
         ImGui::Begin("Memu", &show_memu);
-        ImGui::Button("重置牌堆");
+        ctrl_sigs.reset_deck = ImGui::Button("重置牌堆", ImVec2(100, 50));
+        ctrl_sigs.sort_hand = ImGui::Button("整理手牌", ImVec2(100, 50));
         ImGui::End();
+
+        /*handle signals start*/
+        if (ctrl_sigs.reset_deck == true)
+        {
+            deck.Reset();
+            selected.Reset();
+            ctrl_sigs.reset_deck = false;
+        }
+
+        if (ctrl_sigs.sort_hand == true)
+        {
+            selected.Sort();
+            ctrl_sigs.sort_hand = false;
+        }
+
+        /*handle signals end*/
 
         window.clear();
         sf::Color bg_color(13, 152, 186);
