@@ -12,8 +12,29 @@
 #include <SFML/Graphics/Text.hpp>
 
 #include "../game/deck.hpp"
+#include "../game/hand_evaluator.h"
+#include "../strategy/policy.hpp"
+
 #include "elements.hpp"
 #include "resource_factory.hpp"
+
+struct control_signals
+{
+    bool reset_deck = false;
+    bool sort_hand = false;
+    int rand_hand_type = 0;
+    bool gen_rand_hand = 0;
+    bool analyze_hand = false;
+};
+
+bool setup_cnfont();
+
+void setup_control_widget(control_signals &ctrl_sigs);
+
+void handle_control_signals(
+    control_signals &ctrl_sigs, Deck &cur_deck,
+    gui_components::Card_Slot &selected_cards,
+    const Hand_Evaluator *he, const Policy *ply);
 
 void render_top_cards(sf::RenderWindow *win_ptr,
                       const Resource_Factory &rsc_fac,
@@ -22,14 +43,6 @@ void render_top_cards(sf::RenderWindow *win_ptr,
 void render_bot_hand(sf::RenderWindow *win_ptr,
                      const Resource_Factory &rsc_fac,
                      const gui_components::Card_Slot &selected_cards);
-
-struct control_signals
-{
-    bool reset_deck = false;
-    bool sort_hand = false;
-    int rand_hand_type = 0;
-    bool gen_rand_hand = 0;
-};
 
 int main()
 {
@@ -46,43 +59,16 @@ int main()
     if (!ImGui::SFML::Init(window))
         return -1;
 
-    std::string font_file = "../../resouces/fonts/NotoSansSC_Regular.ttf";
-    ImFontConfig cfg;
-    cfg.MergeMode = false;
-    cfg.OversampleH = 2;
-    cfg.OversampleV = 2;
-    ImGuiIO &io = ImGui::GetIO();
-    io.Fonts->Clear();
-    io.Fonts->AddFontFromFileTTF(
-        font_file.c_str(), 20, &cfg,
-        io.Fonts->GetGlyphRangesDefault());
-    cfg.MergeMode = true;
-    io.Fonts->AddFontFromFileTTF(
-        font_file.c_str(), 20.0f, &cfg,
-        io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
-    io.Fonts->Build();
-    if (!ImGui::SFML::UpdateFontTexture())
-    {
-        std::cout << "Error: update font texture failed\n";
+    if (!setup_cnfont())
         return -1;
-    }
 
     sf::Clock deltaClock;
 
     Deck deck;
+    Hand_Evaluator hand_eval;
+    Policy ply;
 
     gui_components::Card_Slot selected;
-
-    deck.Shuffle_Cards();
-    auto hand = deck.Deal_Multi_Cards(dc_mode::take, 14);
-    for (int i = 0; i < 14; i++)
-        selected.Replace(i, hand[i]);
-    // selected.Replace(0, 1);
-    // selected.Replace(1, 4);
-    // selected.Replace(2, 16);
-    // selected.Replace(3, 16);
-    // selected.Replace(5, 21);
-    // selected.Replace(8, 25);
 
     ImGui::SetNextWindowSize(ImVec2(400, 200));
     ImGui::SetNextWindowPos(ImVec2(100, 400)); // Set the position of the new window
@@ -120,65 +106,11 @@ int main()
 
         sf::Vector2u window_size = window.getSize();
         // std::cout << "winzise: " << window_size.x << ", " << window_size.y << "\n";
+        /*control widget*/
+        setup_control_widget(ctrl_sigs);
 
-        bool show_memu = true;
-
-        ImGui::Begin("Memu", &show_memu);
-        ctrl_sigs.reset_deck = ImGui::Button("重置牌堆", ImVec2(100, 50));
-        ctrl_sigs.sort_hand = ImGui::Button("整理手牌", ImVec2(100, 50));
-
-        ImGui::Text("选择牌型: ");
-        ImGui::SameLine();
-
-        std::vector<std::string> items = {"任意", "听牌", "一上听", "两上听"};
-        if (ImGui::BeginCombo("##combo", items[ctrl_sigs.rand_hand_type].c_str(),
-                              128 /*WidthFitPreview*/))
-        {
-            for (int i = 0; i < int(items.size()); i++)
-            {
-                bool is_selected = (i == ctrl_sigs.rand_hand_type);
-                if (ImGui::Selectable(items[i].c_str(), is_selected))
-                    ctrl_sigs.rand_hand_type = i;
-                if (is_selected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
-
-        ImGui::SameLine();
-        ctrl_sigs.gen_rand_hand = ImGui::Button("生成手牌");
-        // ImGui::BeginGroup();
-        // ImGui::Button("Alpha");
-        // ImGui::Button("Beta");
-        // ImGui::EndGroup();
-        ImGui::End();
-
-        /*handle signals start*/
-        if (ctrl_sigs.reset_deck == true)
-        {
-            deck.Reset();
-            selected.Reset();
-            ctrl_sigs.reset_deck = false;
-        }
-
-        if (ctrl_sigs.sort_hand == true)
-        {
-            selected.Sort();
-            ctrl_sigs.sort_hand = false;
-        }
-
-        if (ctrl_sigs.gen_rand_hand == true)
-        {
-            deck.Reset();
-            selected.Reset();
-            deck.Shuffle_Cards();
-            auto hand = deck.Deal_Multi_Cards(dc_mode::take, 14);
-            for (auto c : hand)
-                selected.Add(c);
-            selected.Sort();
-            ctrl_sigs.gen_rand_hand = false;
-        }
-        /*handle signals end*/
+        /*handle signals*/
+        handle_control_signals(ctrl_sigs, deck, selected, &hand_eval, &ply);
 
         window.clear();
         sf::Color bg_color(13, 152, 186);
@@ -202,6 +134,138 @@ int main()
     ImGui::SFML::Shutdown();
 
     return 0;
+}
+
+bool setup_cnfont()
+{
+    std::string font_file = "../../resouces/fonts/NotoSansSC_Regular.ttf";
+    ImFontConfig cfg;
+    cfg.MergeMode = false;
+    cfg.OversampleH = 2;
+    cfg.OversampleV = 2;
+    ImGuiIO &io = ImGui::GetIO();
+    io.Fonts->Clear();
+    io.Fonts->AddFontFromFileTTF(
+        font_file.c_str(), 20, &cfg,
+        io.Fonts->GetGlyphRangesDefault());
+    cfg.MergeMode = true;
+    io.Fonts->AddFontFromFileTTF(
+        font_file.c_str(), 20.0f, &cfg,
+        io.Fonts->GetGlyphRangesChineseSimplifiedCommon());
+    io.Fonts->Build();
+    if (!ImGui::SFML::UpdateFontTexture())
+    {
+        std::cout << "Error: update font texture failed\n";
+        return false;
+    }
+    return true;
+}
+
+void setup_control_widget(control_signals &ctrl_sigs)
+{
+    bool show_memu = true;
+    ImGui::Begin("Memu", &show_memu);
+    ctrl_sigs.reset_deck = ImGui::Button("重置牌堆", ImVec2(100, 50));
+    ctrl_sigs.sort_hand = ImGui::Button("整理手牌", ImVec2(100, 50));
+
+    ImGui::Text("选择牌型: ");
+    ImGui::SameLine();
+
+    std::vector<std::string> items = {"任意", "听牌", "一上听", "两上听"};
+    if (ImGui::BeginCombo("##combo", items[ctrl_sigs.rand_hand_type].c_str(),
+                          128 /*WidthFitPreview*/))
+    {
+        for (int i = 0; i < int(items.size()); i++)
+        {
+            bool is_selected = (i == ctrl_sigs.rand_hand_type);
+            if (ImGui::Selectable(items[i].c_str(), is_selected))
+                ctrl_sigs.rand_hand_type = i;
+            if (is_selected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    ImGui::SameLine();
+    ctrl_sigs.gen_rand_hand = ImGui::Button("生成手牌");
+    ctrl_sigs.analyze_hand = ImGui::Button("分析手牌", ImVec2(100, 50));
+    ImGui::End();
+}
+
+std::vector<card_t> gen_givenH(Deck &deck, const Hand_Evaluator *he, int givenH)
+{
+    std::vector<card_t> cur_raw_hand;
+    int cnt = 0;
+    while (true)
+    {
+        if (cnt > 100000)
+        {
+            std::cout << "bad luck\n";
+            return cur_raw_hand;
+        }
+        deck.Shuffle_Cards();
+        cur_raw_hand = deck.Deal_Multi_Cards(dc_mode::copy, 14);
+        hand_t cur_hand(cur_raw_hand);
+
+        if (he->HCost(cur_hand) == givenH)
+            return cur_raw_hand;
+    }
+    return cur_raw_hand;
+}
+
+void handle_control_signals(
+    control_signals &ctrl_sigs, Deck &cur_deck,
+    gui_components::Card_Slot &selected_cards,
+    const Hand_Evaluator *he, const Policy *ply)
+{
+    if (ctrl_sigs.reset_deck == true)
+    {
+        ctrl_sigs.reset_deck = false;
+        cur_deck.Reset();
+        selected_cards.Reset();
+    }
+
+    if (ctrl_sigs.sort_hand == true)
+    {
+        ctrl_sigs.sort_hand = false;
+        selected_cards.Sort();
+    }
+
+    if (ctrl_sigs.gen_rand_hand == true)
+    {
+        ctrl_sigs.gen_rand_hand = false;
+        cur_deck.Reset();
+        selected_cards.Reset();
+        std::vector<card_t> hand;
+        if (ctrl_sigs.rand_hand_type == 0)
+        {
+            cur_deck.Shuffle_Cards();
+            hand = cur_deck.Deal_Multi_Cards(dc_mode::copy, 14);
+        }
+        else
+        {
+            hand = gen_givenH(cur_deck, he, ctrl_sigs.rand_hand_type - 1);
+        }
+        for (auto c : hand)
+        {
+            cur_deck.Take_Card(c);
+            selected_cards.Add(c);
+        }
+        selected_cards.Sort();
+    }
+
+    if (ctrl_sigs.analyze_hand == true)
+    {
+        ctrl_sigs.analyze_hand = false;
+
+        auto cur_hand = selected_cards.Valid_Cards();
+        ResDeck resd(cur_hand);
+        auto ip_cards = ply->Get_Improving_Cards(cur_hand, resd);
+        std::cout << "choice count: " << ip_cards.size() << ", good choices:\n";
+        for (auto item : ip_cards)
+            std::cout << item.to_str() << "\n";
+        std::cout << "\n";
+    }
 }
 
 void render_top_cards(sf::RenderWindow *win_ptr,

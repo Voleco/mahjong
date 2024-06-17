@@ -48,4 +48,13 @@ namespace gui_components
         }
         std::sort(partial_hand.begin(), partial_hand.begin() + valid_cnt);
     }
+
+    std::vector<card_t> Card_Slot::Valid_Cards()
+    {
+        std::vector<card_t> res;
+        for (auto c : partial_hand)
+            if (c > 0)
+                res.push_back(c);
+        return res;
+    }
 }

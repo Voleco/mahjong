@@ -37,6 +37,8 @@ namespace gui_components
         {
             partial_hand = std::vector<card_t>(14, 0);
             valid_cnt = 0;
+            card_score = std::vector<int>(14, 0);
+            score_enabled = false;
         }
         bool Add(card_t c);
         void Replace(int idx, card_t c)
@@ -51,10 +53,13 @@ namespace gui_components
             valid_cnt--;
         }
         void Sort();
+        std::vector<card_t> Valid_Cards();
 
         // private:
         std::vector<card_t> partial_hand;
         int valid_cnt;
+        std::vector<int> card_score;
+        bool score_enabled;
     };
 }
 
