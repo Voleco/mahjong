@@ -34,15 +34,18 @@ void setup_control_widget(control_signals &ctrl_sigs);
 void handle_control_signals(
     control_signals &ctrl_sigs, Deck &cur_deck,
     gui_components::Card_Slot &selected_cards,
+    std::vector<Choice> &improving_cards,
     const Hand_Evaluator *he, const Policy *ply);
 
 void render_top_cards(sf::RenderWindow *win_ptr,
                       const Resource_Factory &rsc_fac,
-                      const Deck &cur_deck);
+                      const Deck &cur_deck,
+                      const std::vector<Choice> &improving_cards);
 
 void render_bot_hand(sf::RenderWindow *win_ptr,
                      const Resource_Factory &rsc_fac,
-                     const gui_components::Card_Slot &selected_cards);
+                     const gui_components::Card_Slot &selected_cards,
+                     const std::vector<Choice> &improving_cards);
 
 int main()
 {
@@ -69,6 +72,7 @@ int main()
     Policy ply;
 
     gui_components::Card_Slot selected;
+    std::vector<Choice> improving_cards;
 
     ImGui::SetNextWindowSize(ImVec2(400, 200));
     ImGui::SetNextWindowPos(ImVec2(100, 400)); // Set the position of the new window
@@ -110,7 +114,8 @@ int main()
         setup_control_widget(ctrl_sigs);
 
         /*handle signals*/
-        handle_control_signals(ctrl_sigs, deck, selected, &hand_eval, &ply);
+        handle_control_signals(ctrl_sigs, deck, selected, improving_cards,
+                               &hand_eval, &ply);
 
         window.clear();
         sf::Color bg_color(13, 152, 186);
@@ -119,8 +124,8 @@ int main()
         /* view approach start*/
 
         // draw something to that view
-        render_top_cards(&window, resource_fac, deck);
-        render_bot_hand(&window, resource_fac, selected);
+        render_top_cards(&window, resource_fac, deck, improving_cards);
+        render_bot_hand(&window, resource_fac, selected, improving_cards);
 
         // want to do visibility checks? retrieve the view
         sf::View currentView = window.getView();
@@ -216,6 +221,7 @@ std::vector<card_t> gen_givenH(Deck &deck, const Hand_Evaluator *he, int givenH)
 void handle_control_signals(
     control_signals &ctrl_sigs, Deck &cur_deck,
     gui_components::Card_Slot &selected_cards,
+    std::vector<Choice> &improving_cards,
     const Hand_Evaluator *he, const Policy *ply)
 {
     if (ctrl_sigs.reset_deck == true)
@@ -223,12 +229,14 @@ void handle_control_signals(
         ctrl_sigs.reset_deck = false;
         cur_deck.Reset();
         selected_cards.Reset();
+        improving_cards.clear();
     }
 
     if (ctrl_sigs.sort_hand == true)
     {
         ctrl_sigs.sort_hand = false;
         selected_cards.Sort();
+        improving_cards.clear();
     }
 
     if (ctrl_sigs.gen_rand_hand == true)
@@ -252,6 +260,8 @@ void handle_control_signals(
             selected_cards.Add(c);
         }
         selected_cards.Sort();
+
+        improving_cards.clear();
     }
 
     if (ctrl_sigs.analyze_hand == true)
@@ -261,8 +271,12 @@ void handle_control_signals(
         auto cur_hand = selected_cards.Valid_Cards();
         ResDeck resd(cur_hand);
         auto ip_cards = ply->Get_Improving_Cards(cur_hand, resd);
-        std::cout << "choice count: " << ip_cards.size() << ", good choices:\n";
-        for (auto item : ip_cards)
+        std::sort(ip_cards.begin(), ip_cards.end(), [](Choice left, Choice right)
+                  { return left.improving_cards.size() > right.improving_cards.size(); });
+
+        improving_cards = ip_cards;
+        std::cout << "choice count: " << improving_cards.size() << ", good choices:\n";
+        for (auto item : improving_cards)
             std::cout << item.to_str() << "\n";
         std::cout << "\n";
     }
@@ -270,7 +284,8 @@ void handle_control_signals(
 
 void render_top_cards(sf::RenderWindow *win_ptr,
                       const Resource_Factory &rsc_fac,
-                      const Deck &cur_deck)
+                      const Deck &cur_deck,
+                      const std::vector<Choice> &improving_cards)
 {
     sf::Vector2u win_size = win_ptr->getSize();
 
@@ -317,7 +332,8 @@ void render_top_cards(sf::RenderWindow *win_ptr,
 
 void render_bot_hand(sf::RenderWindow *win_ptr,
                      const Resource_Factory &rsc_fac,
-                     const gui_components::Card_Slot &selected_cards)
+                     const gui_components::Card_Slot &selected_cards,
+                     const std::vector<Choice> &improving_cards)
 {
     sf::Vector2u win_size = win_ptr->getSize();
 
@@ -336,6 +352,28 @@ void render_bot_hand(sf::RenderWindow *win_ptr,
         // std::cout << "i: " << i << "\n";
         // std::cout << "posx: " << posx << ", " << "posy: " << posy << "\n";
         cur_tile.setPosition(posx, posy);
+
+        if (improving_cards.size() > 0)
+        {
+            int idx = -1;
+            for (int i = 0; i < int(improving_cards.size()); i++)
+            {
+                if (improving_cards[i].kick_card == c)
+                {
+                    idx = i;
+                    break;
+                }
+            }
+            if (idx != -1)
+            {
+                int diff = 250 / improving_cards.size();
+                sf::Color color = sf::Color(255, 0, 0, 255);
+                color.a -= idx * diff;
+                cur_tile.setOutlineThickness(5);
+                cur_tile.setOutlineColor(color);
+            }
+        }
+
         win_ptr->draw(cur_tile);
     }
 }
