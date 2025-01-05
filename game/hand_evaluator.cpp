@@ -1,6 +1,5 @@
 #include "hand_evaluator.h"
 
-
 bool Hand_Evaluator::is_leaf(const decomposed_hand<meld_t> &s) const
 {
     auto &s_hand = s.remain_hand;
@@ -241,70 +240,64 @@ bool Hand_Evaluator::can_semi_triple(const hand_t &hand, int i) const
 std::vector<hand_t> Hand_Evaluator::extract_meld(const hand_t &cards, int index) const
 {
     std::vector<hand_t> result;
-
     if (can_straight(cards, index))
     {
-        result.push_back(cards);
-        result.back().hand_cnt -= 3;
-        result.back().cards[index]--;
-        result.back().cards[index + 1]--;
-        result.back().cards[index + 2]--;
+        hand_t tmp = cards;
+        tmp.cards[index]--;
+        tmp.cards[index + 1]--;
+        tmp.cards[index + 2]--;
+        tmp.hand_cnt -= 3;
+        result.push_back(tmp);
     }
-
     if (can_triple(cards, index))
     {
-        result.push_back(cards);
-        result.back().hand_cnt -= 3;
-        result.back().cards[index] -= 3;
+        hand_t tmp = cards;
+        tmp.cards[index] -= 3;
+        tmp.hand_cnt -= 3;
+        result.push_back(tmp);
     }
-
     return result;
 }
 
 bool Hand_Evaluator::is_Win(const hand_t &hand) const
 {
-    /*sp case 1: 7 pairs*/
+    // 例如特判七对子
     if (hand.hand_cnt == 14)
     {
         bool all_even = true;
-        for (auto item : hand.cards)
-            if (item % 2 != 0)
+        for (auto cnt : hand.cards)
+        {
+            if ((cnt % 2) != 0)
             {
                 all_even = false;
                 break;
             }
-
+        }
         if (all_even)
             return true;
     }
 
-    /*TODO sp case 2: 13yao*/
+    // 其他更多特判 (13幺等)...
 
-    /*regular case*/
-    if (hand.hand_cnt != 14 && hand.hand_cnt != 11 && hand.hand_cnt != 8 &&
-        hand.hand_cnt != 5 && hand.hand_cnt != 2)
+    // 常规判断：找将头 + 剩余 all_meld
+    if (hand.hand_cnt % 3 != 2)
         return false;
 
-    // atama_idxs
     std::vector<int> atama_candidates;
+    // 找所有可以做将头的牌
     for (int i = 0; i < MAX_CARD_VALUE; i++)
         if (hand.cards[i] >= 2)
             atama_candidates.push_back(i);
 
-    // int
+    // 挨个尝试减去将头，再判断剩下的是否 all_meld
     for (auto ac : atama_candidates)
     {
-        // std::cout << "checking atama: " << int(card_group[idx].cardname) << "\n";
-        hand_t candi_melds = hand;
-        candi_melds.hand_cnt -= 2;
-        candi_melds.cards[ac] -= 2;
-
-        if (all_melds(candi_melds) == true)
-        {
+        hand_t tmp = hand;
+        tmp.cards[ac] -= 2;
+        tmp.hand_cnt -= 2;
+        if (all_melds(tmp))
             return true;
-        }
     }
-
     return false;
 }
 

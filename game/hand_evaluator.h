@@ -7,7 +7,6 @@
 #include "deck.hpp"
 #include "../utils/util_helpers.h"
 
-
 /*fisrt non 0 cnt card */
 template <typename T>
 size_t first_non0(const std::vector<T> &vec)
@@ -40,6 +39,7 @@ public:
 private:
     bool all_melds(const hand_t &cards) const;
 
+    // 提取 meld
     std::vector<hand_t> extract_meld(const hand_t &cards, int index) const;
 
     bool can_straight(const hand_t &hand, int index) const;

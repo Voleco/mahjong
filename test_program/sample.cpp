@@ -44,49 +44,49 @@ void test1(int test_count)
 {
     Hand_Evaluator he;
 
-    {
-        std::vector<std::vector<card_t>> test_hands = {
-            {1, 1, 1, 2, 2},
-            {1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
-            {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
+    // {
+    //     std::vector<std::vector<card_t>> test_hands = {
+    //         {1, 1, 1, 2, 2},
+    //         {1, 1, 1, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
+    //         {1, 1, 2, 2, 6, 6, 21, 21, 25, 25, 28, 28, 24, 24}};
 
-        for (int i = 0; i < int(test_hands.size()); i++)
-        {
-            hand_t cur_hand(test_hands[i]);
+    //     for (int i = 0; i < int(test_hands.size()); i++)
+    //     {
+    //         hand_t cur_hand(test_hands[i]);
 
-            std::cout << "cur hand:\n";
-            std::cout << cur_hand.to_str() << "\n";
-            if (he.is_Win(cur_hand))
-            {
-                std::cout << "hand " << i << " is win\n";
-            }
-        }
-    }
+    //         // std::cout << "cur hand:\n";
+    //         std::cout << cur_hand.to_str() << "\n";
+    //         if (he.is_Win(cur_hand))
+    //         {
+    //             std::cout << "hand " << i << " is win\n";
+    //         }
+    //     }
+    // }
 
-    {
-        std::vector<std::vector<card_t>> test_hands = {
-            {5, 6, 8, 8, 11, 12, 13, 15, 15, 27, 28, 29, 29, 29},
-            {1, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
-            {1, 1, 2, 2, 6, 6, 21, 22, 23, 24, 28, 28, 29, 29},
-            {1, 1, 2, 2, 6, 6, 6, 7, 8, 9, 25, 25, 27, 29}};
+    // {
+    //     std::vector<std::vector<card_t>> test_hands = {
+    //         {5, 6, 8, 8, 11, 12, 13, 15, 15, 27, 28, 29, 29, 29},
+    //         {1, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9, 9, 9},
+    //         {1, 1, 2, 2, 6, 6, 21, 22, 23, 24, 28, 28, 29, 29},
+    //         {1, 1, 2, 2, 6, 6, 6, 7, 8, 9, 25, 25, 27, 29}};
 
-        for (int i = 0; i < int(test_hands.size()); i++)
-        {
+    //     for (int i = 0; i < int(test_hands.size()); i++)
+    //     {
 
-            hand_t cur_hand(test_hands[i]);
+    //         hand_t cur_hand(test_hands[i]);
 
-            auto res = he.full_decomp_hand(cur_hand);
-            std::cout << "cur hand:\n";
-            std::cout << cur_hand.to_str() << "\n";
-            std::cout << "hcost: " << he.HCost(cur_hand) << "\n";
-            std::cout << "possible decompse: \n";
-            for (int i = 0; i < int(res.size()); i++)
-            {
-                std::cout << "decompose: " << i + 1 << "\n";
-                std::cout << res[i].to_str() << "\n";
-            }
-        }
-    }
+    //         auto res = he.full_decomp_hand(cur_hand);
+    //         std::cout << "cur hand:\n";
+    //         std::cout << cur_hand.to_str() << "\n";
+    //         std::cout << "hcost: " << he.HCost(cur_hand) << "\n";
+    //         std::cout << "possible decompse: \n";
+    //         for (int i = 0; i < int(res.size()); i++)
+    //         {
+    //             std::cout << "decompose: " << i + 1 << "\n";
+    //             std::cout << res[i].to_str() << "\n";
+    //         }
+    //     }
+    // }
 
     std::vector<hand_t> test_cases;
 
