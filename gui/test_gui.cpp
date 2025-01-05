@@ -256,7 +256,7 @@ void handle_control_signals(
         }
         for (auto c : hand)
         {
-            cur_deck.Take_Card(c);
+            cur_deck.Remove_Card(c);
             selected_cards.Add(c);
         }
         selected_cards.Sort();

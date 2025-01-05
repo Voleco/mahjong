@@ -27,11 +27,11 @@ public:
     void Shuffle_Cards();
     card_t Deal_Card(dc_mode mode);
     std::vector<card_t> Deal_Multi_Cards(dc_mode mode, int n);
-    void Take_Card(card_t c);
+    void Remove_Card(card_t c);
 
     std::vector<card_t> Get_Possible_Cards() const;
     cardcnt Get_CardCnt(card_t c) const { return stacked_remaining_cards[c]; }
-    
+
 private:
     std::mt19937 rng;
     std::vector<card_t> remaining_cards;
@@ -44,7 +44,8 @@ class ResDeck
 public:
     ResDeck() = delete;
     ResDeck(const hand_t &hand);
-    void Take_Card(card_t c);
+    void Remove_Card(card_t c, int cnt);
+    void Add_Card(card_t c, int cnt);
     std::vector<card_t> Get_Possible_Cards() const;
     cardcnt Get_CardCnt(card_t c) const { return stacked_remaining_cards[c]; }
 

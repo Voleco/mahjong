@@ -57,7 +57,7 @@ std::vector<card_t> Deck::Deal_Multi_Cards(dc_mode mode, int n)
     return res;
 }
 
-void Deck::Take_Card(card_t c)
+void Deck::Remove_Card(card_t c)
 {
     for (int i = 0; i < int(remaining_cards.size()); i++)
         if (remaining_cards[i] == c)
@@ -83,9 +83,14 @@ ResDeck::ResDeck(const hand_t &hand)
     }
 }
 
-void ResDeck::Take_Card(card_t c)
+void ResDeck::Remove_Card(card_t c, int cnt)
 {
-    stacked_remaining_cards[c]--;
+    stacked_remaining_cards[c] -= cnt;
+}
+
+void ResDeck::Add_Card(card_t c, int cnt)
+{
+    stacked_remaining_cards[c] += cnt;
 }
 
 std::vector<card_t> ResDeck::Get_Possible_Cards() const

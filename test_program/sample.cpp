@@ -14,6 +14,8 @@ void test1(int test_count);
 
 void test2(int enough_count, int checking_H);
 
+void test3(int enough_count, int checking_H);
+
 int main(int argc, char **argv)
 {
     if (argc > 1 && std::strcmp(argv[1], "-h") == 0)
@@ -32,6 +34,16 @@ int main(int argc, char **argv)
         if (argc > 3)
             checking_H = std::stoi(argv[3]);
         test2(enough_count, checking_H);
+    }
+    else if (argc > 1 && strcmp(argv[1], "-s") == 0)
+    {
+        int enough_count = 10;
+        if (argc > 2)
+            enough_count = std::stoi(argv[2]);
+        int checking_H = 0;
+        if (argc > 3)
+            checking_H = std::stoi(argv[3]);
+        test3(enough_count, checking_H);
     }
     else
     {
@@ -195,4 +207,109 @@ void test2(int enough_count, int checking_H)
             enough++;
         }
     }
+}
+
+
+
+void test3(int enough_count, int checking_H)
+{
+    Deck deck;
+    int test_count = 1000000; // 总共尝试次数
+
+    Hand_Evaluator he;
+    Policy ply;
+
+    int enough = 0;
+    for (int i = 0; i < test_count; i++)
+    {
+        if (enough >= enough_count)
+            break;
+
+        // 1) 洗牌 & 抽 14 张牌
+        deck.Shuffle_Cards();
+        std::vector<card_t> cur_raw_hand = deck.Deal_Multi_Cards(dc_mode::copy, 14);
+        hand_t cur_hand(cur_raw_hand);
+        int cur_h = he.HCost(cur_hand);
+        if (cur_h != checking_H)
+            continue; // 我们只关心 HCost == checking_H 的手牌
+
+        // 如果到这里，说明当前手牌HCost满足
+        std::cout << "------------------------------------------------------------------------\n";
+        std::cout << "[test3] Found a hand with HCost = " << checking_H << "\n";
+        std::cout << "Hand cards: " << cur_hand.to_str() << "\n\n";
+
+        // 2) 构建剩余牌堆
+        ResDeck resd(cur_hand);
+
+        // 3) 获取当前手牌的“能让HCost继续下降”的所有Choice
+        auto ip_cards = ply.Get_Improving_Cards(cur_hand, resd);
+
+        // 如果没有可提升的牌，直接打印提示即可
+        if (ip_cards.empty())
+        {
+            std::cout << "No improving cards. (Cannot reduce HCost below " << checking_H << ")\n";
+        }
+        else
+        {
+            std::cout << "Choice count: " << ip_cards.size() << "\n";
+
+            // 4) 遍历每个 choice (kick_card) 以及对应可进的 improving_cards
+            for (auto &choice : ip_cards)
+            {
+                card_t kc = choice.kick_card;
+                std::cout << "  >> Kick card: " << get_cardName(kc) << "\n";
+                if (choice.improving_cards.empty())
+                {
+                    std::cout << "     No improving_cards?\n";
+                    continue;
+                }
+
+                // 遍历具体可进的牌
+                for (auto &mc : choice.improving_cards)
+                {
+                    card_t in = mc.rank;
+                    cardcnt cnt = mc.cnt;   // 剩余张数(可能是 deck里的余量)
+
+                    if (cnt <= 0)
+                        continue;
+
+                    // --- 打印这一步的信息 ---
+                    std::cout << "     Replace with card: " << get_cardName(in)
+                              << " (cnt=" << cnt << " in deck) ... ";
+
+                    // --- 准备做一次“in-place”动作，但要先保存(或回溯) ---
+                    //     这里为了让示例简单，不影响当前 cur_hand & resd，
+                    //     我们做一个局部拷贝，然后操作并评分
+                    hand_t tmp_hand = cur_hand;
+                    ResDeck  tmp_resd = resd;
+
+                    // 打出 kc，换进 in
+                    tmp_hand.cards[kc]--;
+                    tmp_hand.cards[in]++;
+
+                    // 将这一张 in 从牌堆里移除1张
+                    tmp_resd.Remove_Card(in, 1);
+
+                    // --- 现在调用 Get_Score_DFS 对新手牌进行评分 ---
+                    int dep_limit = 5;
+                    uint64_t new_score = ply.Get_Score_DFS(tmp_hand, tmp_resd, he, dep_limit);
+
+                    std::cout << " new_score=" << new_score;
+
+                    // 也可以看看新的 HCost
+                    int new_h = he.HCost(tmp_hand);
+                    std::cout << " (HCost=" << new_h << ")\n";
+                }
+
+                std::cout << "\n";
+            }
+        }
+
+        std::cout << "------------------------------------------------------------------------\n\n";
+
+        enough++;
+    }
+
+    std::cout << "[test3] Finished after checking " << test_count << " random deals. \n"
+              << "Found " << enough << " hands with HCost = " << checking_H << ".\n";
 }
