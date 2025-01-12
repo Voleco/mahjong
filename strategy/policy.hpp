@@ -66,10 +66,11 @@ public:
     /* get cards, kicking which could improve hand */
     std::vector<Choice> Get_Improving_Cards(const hand_t &hand, const ResDeck &resdeck) const;
 
-    int Get_Score(const hand_t &hand, card_t kicked, score_mode mode, int depth) const;
-
-    uint64_t Get_Score_DFS(const hand_t &start_hand, ResDeck start_deck, const Hand_Evaluator &he, int dep_limit) const;
-
+    std::unordered_map<card_t, uint64_t> Get_Score_DFS(
+        const hand_t &start_hand,
+        ResDeck start_deck,
+        const Hand_Evaluator &he,
+        int dep_limit) const;
     /**/
     std::vector<Choice> Get_Good_Paths(const hand_t &hand) const;
 

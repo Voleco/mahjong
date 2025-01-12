@@ -209,8 +209,6 @@ void test2(int enough_count, int checking_H)
     }
 }
 
-
-
 void test3(int enough_count, int checking_H)
 {
     Deck deck;
@@ -238,72 +236,20 @@ void test3(int enough_count, int checking_H)
         std::cout << "[test3] Found a hand with HCost = " << checking_H << "\n";
         std::cout << "Hand cards: " << cur_hand.to_str() << "\n\n";
 
+        auto time1 = std::chrono::high_resolution_clock::now();
         // 2) 构建剩余牌堆
         ResDeck resd(cur_hand);
 
-        // 3) 获取当前手牌的“能让HCost继续下降”的所有Choice
-        auto ip_cards = ply.Get_Improving_Cards(cur_hand, resd);
+        Policy ply;
+        int dep_limit = 5;
+        auto scores = ply.Get_Score_DFS(cur_hand, resd, he, dep_limit);
 
-        // 如果没有可提升的牌，直接打印提示即可
-        if (ip_cards.empty())
-        {
-            std::cout << "No improving cards. (Cannot reduce HCost below " << checking_H << ")\n";
-        }
-        else
-        {
-            std::cout << "Choice count: " << ip_cards.size() << "\n";
+        auto time2 = std::chrono::high_resolution_clock::now();
+        auto time_usage = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
+        std::cout << "time usage: " << time_usage / 1000.0 << " s\n";
 
-            // 4) 遍历每个 choice (kick_card) 以及对应可进的 improving_cards
-            for (auto &choice : ip_cards)
-            {
-                card_t kc = choice.kick_card;
-                std::cout << "  >> Kick card: " << get_cardName(kc) << "\n";
-                if (choice.improving_cards.empty())
-                {
-                    std::cout << "     No improving_cards?\n";
-                    continue;
-                }
-
-                // 遍历具体可进的牌
-                for (auto &mc : choice.improving_cards)
-                {
-                    card_t in = mc.rank;
-                    cardcnt cnt = mc.cnt;   // 剩余张数(可能是 deck里的余量)
-
-                    if (cnt <= 0)
-                        continue;
-
-                    // --- 打印这一步的信息 ---
-                    std::cout << "     Replace with card: " << get_cardName(in)
-                              << " (cnt=" << cnt << " in deck) ... ";
-
-                    // --- 准备做一次“in-place”动作，但要先保存(或回溯) ---
-                    //     这里为了让示例简单，不影响当前 cur_hand & resd，
-                    //     我们做一个局部拷贝，然后操作并评分
-                    hand_t tmp_hand = cur_hand;
-                    ResDeck  tmp_resd = resd;
-
-                    // 打出 kc，换进 in
-                    tmp_hand.cards[kc]--;
-                    tmp_hand.cards[in]++;
-
-                    // 将这一张 in 从牌堆里移除1张
-                    tmp_resd.Remove_Card(in, 1);
-
-                    // --- 现在调用 Get_Score_DFS 对新手牌进行评分 ---
-                    int dep_limit = 5;
-                    uint64_t new_score = ply.Get_Score_DFS(tmp_hand, tmp_resd, he, dep_limit);
-
-                    std::cout << " new_score=" << new_score;
-
-                    // 也可以看看新的 HCost
-                    int new_h = he.HCost(tmp_hand);
-                    std::cout << " (HCost=" << new_h << ")\n";
-                }
-
-                std::cout << "\n";
-            }
-        }
+        for (auto iter = scores.begin(); iter != scores.end(); iter++)
+            std::cout << "card " << get_cardName(iter->first) << " score: " << iter->second << "\n";
 
         std::cout << "------------------------------------------------------------------------\n\n";
 
