@@ -14,7 +14,7 @@ void test1(int test_count);
 
 void test2(int enough_count, int checking_H);
 
-void test3(int enough_count, int checking_H);
+void test3(int enough_count, int checking_H, int depth_limit);
 
 int main(int argc, char **argv)
 {
@@ -43,7 +43,10 @@ int main(int argc, char **argv)
         int checking_H = 0;
         if (argc > 3)
             checking_H = std::stoi(argv[3]);
-        test3(enough_count, checking_H);
+        int depth_limit = 2;
+        if (argc > 4)
+            depth_limit = std::stoi(argv[4]);
+        test3(enough_count, checking_H, depth_limit);
     }
     else
     {
@@ -209,7 +212,7 @@ void test2(int enough_count, int checking_H)
     }
 }
 
-void test3(int enough_count, int checking_H)
+void test3(int enough_count, int checking_H, int depth_limit)
 {
     Deck deck;
     int test_count = 1000000; // 总共尝试次数
@@ -241,8 +244,7 @@ void test3(int enough_count, int checking_H)
         ResDeck resd(cur_hand);
 
         Policy ply;
-        int dep_limit = 5;
-        auto scores = ply.Get_Score_DFS(cur_hand, resd, he, dep_limit);
+        auto scores = ply.Get_Score_DFS(cur_hand, resd, he, depth_limit);
 
         auto time2 = std::chrono::high_resolution_clock::now();
         auto time_usage = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
