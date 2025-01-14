@@ -75,8 +75,12 @@ public:
     std::vector<Choice> Get_Good_Paths(const hand_t &hand) const;
 
 private:
-    uint64_t dfs_impl(hand_t &hand, ResDeck &deck,
-                      const Hand_Evaluator &he,
-                      int depth, int dep_limit,
-                      uint64_t ways) const;
+    uint64_t dfs_improving(
+        hand_t &hand,
+        ResDeck &deck,
+        const Hand_Evaluator &he,
+        int depth,
+        int dep_limit,
+        int initH // 初始时的HCost
+    ) const;
 };

@@ -22,74 +22,102 @@ void undo_action(hand_t &hand, sub act)
     hand.cards[act.in]--;
 }
 
-struct state
-{
-    hand_t hand;   // 当前手牌
-    ResDeck deck;  // 剩余牌堆
-    uint64_t ways; // 累加计数(或概率权重）
-    int depth;     // 当前搜索深度
-};
 
-// ------ 递归DFS的辅助函数 ------
-uint64_t Policy::dfs_impl(hand_t &hand, ResDeck &deck,
-                          const Hand_Evaluator &he,
-                          int depth, int dep_limit,
-                          uint64_t ways) const
+uint64_t Policy::dfs_improving(
+    hand_t &hand,
+    ResDeck &deck,
+    const Hand_Evaluator &he,
+    int depth,
+    int dep_limit,
+    int initH // 初始时的HCost
+) const
 {
-    // 1) 计算HCost
-    int cur_h = he.HCost(hand);
+    // 1) 计算当前手牌的评估值
+    int curH = he.HCost(hand);
 
-    // 2) 判断是否到达叶子：HCost=-1 或深度达上限
-    if (cur_h == -1 || depth == dep_limit)
+    // std::cout << "cur hand: " << hand.to_str() << " ,curH: " << curH << ", depth: " << depth << "\n";
+
+    // 2) 判断是否达成“目标状态”
+    //    （示例：curH == -1 代表和牌；或 curH <= initH - dep_limit 代表某种阈值达成）
+    if (curH == -1)
     {
-        return ways;
+        // 找到“有效叶子”
+        return 1ULL;
     }
 
-    // 3) 查看能否进一步改善
-    //    通常Get_Improving_Cards只返回“能让HCost更低”的改变，否则返回空
+    // 3) 如果达到搜索深度上限，还没达成目标，则不计分
+    // 如果已经走到dep_limit
+    if (depth == dep_limit)
+    {
+        // 只有在curH==initH - dep_limit时视为恰好完成dep_limit次改善
+        if (curH == initH - dep_limit)
+            return 1ULL;
+        else
+            return 0ULL;
+    }
+
+    // 4) 获取当前状态下“能改善手牌”的所有踢牌 + 进牌组合
     std::vector<Choice> choices = Get_Improving_Cards(hand, deck);
     if (choices.empty())
     {
-        // 无法减少HCost，也视为叶子
-        return ways;
+        // 如果没有能改善的动作，则无法继续搜
+        return 0ULL;
     }
 
-    uint64_t result = 0;
-
-    // 4) 为每个Choice遍历
-    for (auto &choice : choices)
+    // 5) 对每个 Choice 进行展开
+    uint64_t ways = 0ULL;
+    for (auto &ch : choices)
     {
-        // choice.kick_card是打出去的牌
-        // choice.improving_cards中列举了“可进的牌”及其剩余数量
-        for (auto &mc : choice.improving_cards)
+        // ch.kick_card 是要踢出的那张牌
+        // ch.improving_cards 是“进的牌及其张数”
+        card_t out_card = ch.kick_card;
+
+        // 如果手牌里根本没有 out_card，跳过(理论上不会发生)
+        if (hand.cards[out_card] == 0)
         {
-            if (mc.cnt == 0)
+            continue;
+        }
+
+        // 先踢掉 out_card
+        hand.cards[out_card]--;
+
+        // 然后对每种 improving_card 做尝试
+        for (auto &mc : ch.improving_cards)
+        {
+            card_t in_card = mc.rank;
+            uint64_t count_in = mc.cnt;
+            if (count_in == 0)
             {
-                continue; // 没剩余就跳过
+                // 没牌可进，也没贡献
+                continue;
+            }
+            // 如果牌堆里对应数量更少，也需要根据实际可用数量来做处理
+            // 这里简单示范
+            uint64_t actual_cnt_in = std::min<uint64_t>(count_in, deck.Get_CardCnt(in_card));
+            if (actual_cnt_in == 0)
+            {
+                continue;
             }
 
-            // 构造换牌操作
-            sub s{choice.kick_card, mc.rank};
-            // 改动 hand
-            apply_action(hand, s);
+            // hand 加一张 in_card
+            hand.cards[in_card]++;
+            deck.Remove_Card(in_card, 1); // 从牌堆取 1 张
 
-            // 从 deck 中移除1张进的牌
-            deck.Remove_Card(mc.rank, 1);
+            // 递归搜索下一层（深度+1）
+            uint64_t child_ways = dfs_improving(hand, deck, he, depth + 1, dep_limit, initH);
+            // 加权累加
+            ways += actual_cnt_in * child_ways;
 
-            // ways 乘以 mc.cnt (如果你想将其视为“有 mc.cnt 条分支”)
-            // 若你只想算路径数而不加权，也可 ways2 = ways * 1
-            uint64_t ways2 = ways * mc.cnt;
-
-            // 递归
-            result += dfs_impl(hand, deck, he, depth + 1, dep_limit, ways2);
-
-            // 回溯
-            deck.Add_Card(mc.rank, 1);
-            undo_action(hand, s);
+            // 撤销操作
+            deck.Add_Card(in_card, 1);
+            hand.cards[in_card]--;
         }
+
+        // 撤销踢掉 out_card
+        hand.cards[out_card]++;
     }
 
-    return result;
+    return ways;
 }
 
 // 计算对手牌中每一张可打出的牌，其对应的和牌(Hcost == -1)叶子节点累计数
@@ -99,46 +127,78 @@ std::unordered_map<card_t, uint64_t> Policy::Get_Score_DFS(
     const Hand_Evaluator &he,
     int dep_limit) const
 {
-    // 结果：其中 key=打出的牌，value=该牌对应的和牌分支数
+    // map: key=打出的牌, value=search加权分支数
     std::unordered_map<card_t, uint64_t> result;
 
-    // 收集手牌中所有非零数量的牌
-    // 这样只对手里实际有的牌做处理
-    std::vector<card_t> unique_cards;
-    for (int i = 0; i < (int)start_hand.cards.size(); i++)
+    // 打印起手信息
+    // std::cout << "start hand\n";
+    // std::cout << start_hand.to_str() << "\n";
+    int initH = he.HCost(start_hand);
+    // std::cout << "start hcost = " << initH << "\n";
+
+    // 1) 获取所有“能改善手牌”的踢牌选择
+    std::vector<Choice> choices = Get_Improving_Cards(start_hand, start_deck);
+    if (choices.empty())
     {
-        if (start_hand.cards[i] > 0)
-        {
-            unique_cards.push_back(card_t(i));
-        }
+        return result;
     }
 
-    // 对于手牌里每一张牌，假设打出它，然后执行 DFS 计算
-    for (auto c : unique_cards)
+    // 2) 对每个 choice，做一次 DFS 并把累加分支数放入 result[kick_card]
+    //    其中 choice.kick_card 就是“踢出的那张牌”
+    //    choice.improving_cards 是可进的牌及其数量
+    for (auto &ch : choices)
     {
+        card_t kcard = ch.kick_card;
+
+        // 把手牌复制一份，好做apply/undo
         hand_t temp_hand = start_hand;
 
-        // 先打出 c
-        temp_hand.cards[c]--;
-        if (temp_hand.cards[c] < 0)
+        // 先踢出 kcard
+        if (temp_hand.cards[kcard] == 0)
         {
-            // 如果减完为负数，说明此牌无效，恢复后跳过
-            temp_hand.cards[c]++;
+            // 理论上不会发生，因为 Get_Improving_Cards 都是基于真实手牌
             continue;
         }
+        temp_hand.cards[kcard]--;
 
-        // ways 从1开始
-        uint64_t ways = 1;
-        // 搜索并得到当前打出 c 之后的“和牌”叶子节点数
-        uint64_t sum_leaves = dfs_impl(temp_hand, start_deck, he, 0, dep_limit, ways);
+        // 计算针对这张 kick_card 的总ways
+        uint64_t total_ways_for_this_kcard = 0ULL;
 
-        // 恢复手牌
-        temp_hand.cards[c]++;
+        // 遍历可进的牌
+        for (auto &mc : ch.improving_cards)
+        {
+            card_t card_in = mc.rank;
+            uint64_t count_in = mc.cnt;
+            if (count_in == 0)
+            {
+                // 理论上也不太会出现，但以防万一
+                continue;
+            }
 
-        // 记录到结果
-        result[c] = sum_leaves;
+            // 临时处理：手牌加一张进牌
+            temp_hand.cards[card_in]++;
+            // 牌堆中也要减少 1 张 card_in
+            start_deck.Remove_Card(card_in, 1);
+
+            // std::cout << "打掉 " << get_cardName(kcard) << " get " << get_cardName(card_in) << "\n";
+            // 开始DFS，从 depth=1 (因为踢+进已经相当于走了一步)
+            uint64_t ways = dfs_improving(temp_hand, start_deck, he, 1, dep_limit, initH);
+
+            // std::cout << "total score: " << count_in * ways << "\n";
+            // 根据 count_in 进行加权累加
+            total_ways_for_this_kcard += count_in * ways;
+
+            //   << " score: " << count_in * ways << "\n";
+            // 撤销这张进牌
+            start_deck.Add_Card(card_in, 1);
+            temp_hand.cards[card_in]--;
+        }
+
+        // 把这张踢牌对应的统计值存到 result
+        result[kcard] = total_ways_for_this_kcard;
     }
 
+    // 3) 返回汇总结果
     return result;
 }
 
