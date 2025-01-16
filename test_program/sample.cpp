@@ -212,6 +212,12 @@ void test2(int enough_count, int checking_H)
     }
 }
 
+static std::string quoteString(const std::string &str)
+{
+    // 简易版本：在字符串外围加双引号
+    return "\"" + str + "\"";
+}
+
 void test3(int enough_count, int checking_H, int depth_limit)
 {
     Deck deck;
@@ -220,44 +226,95 @@ void test3(int enough_count, int checking_H, int depth_limit)
     Hand_Evaluator he;
     Policy ply;
 
-    int enough = 0;
+    int found_hands = 0;  // 记录满足条件 (HCost == checking_H) 的手牌数
+    int sample_index = 0; // 每遇到一副符合条件的手牌，就给它一个序号
+
+    // 先打印一个简单的说明，或者你也可以只输出纯数据
+    // 这里我们只打印“#”开头的注释，表明列含义
+    // 注意：如果要纯 CSV，可将此注释行去掉
+    std::cout << "Sample hands of HCost = " << checking_H << "\n";
+
+    std::cout << "# sample_index,hand (14 cards),[Then multiple lines: card_name,depth1_score,depth2_score,...]\n";
+
     for (int i = 0; i < test_count; i++)
     {
-        if (enough >= enough_count)
+        if (found_hands >= enough_count)
             break;
 
         // 1) 洗牌 & 抽 14 张牌
         deck.Shuffle_Cards();
         std::vector<card_t> cur_raw_hand = deck.Deal_Multi_Cards(dc_mode::copy, 14);
         hand_t cur_hand(cur_raw_hand);
+
+        // 只关心 HCost == checking_H 的手牌
         int cur_h = he.HCost(cur_hand);
         if (cur_h != checking_H)
-            continue; // 我们只关心 HCost == checking_H 的手牌
+            continue;
 
-        // 如果到这里，说明当前手牌HCost满足
-        std::cout << "------------------------------------------------------------------------\n";
-        std::cout << "[test3] Found a hand with HCost = " << checking_H << "\n";
-        std::cout << "Hand cards: " << cur_hand.to_str() << "\n\n";
+        found_hands++;
 
-        auto time1 = std::chrono::high_resolution_clock::now();
+        // （可选）打印一些分隔符，或先打印该手牌的序号和手牌本身
+        // 样式示例：  sample_index,hand
+        // 这样后续每张牌的一行“表格”就可直接跟在后面
+        std::cout << "[sample start]: " << sample_index << "\n";
+
+        std::cout << sample_index << ","
+                  << quoteString(cur_hand.to_str()) << "\n";
+
         // 2) 构建剩余牌堆
         ResDeck resd(cur_hand);
 
-        Policy ply;
-        auto scores = ply.Get_Score_DFS(cur_hand, resd, he, depth_limit);
+        // 3) 先收集各深度的分数：card_scores[c][d-1] = 分数
+        std::unordered_map<card_t, std::vector<uint64_t>> card_scores;
+        card_scores.reserve(40); // 视情况而定
 
-        auto time2 = std::chrono::high_resolution_clock::now();
-        auto time_usage = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
-        std::cout << "time usage: " << time_usage / 1000.0 << " s\n";
+        for (int d = 1; d <= depth_limit; d++)
+        {
+            // 为保证每次搜索不干扰，复制一份 ResDeck
+            ResDeck tmpResd = resd;
+            auto scores = ply.Get_Score_DFS(cur_hand, tmpResd, he, d);
 
-        for (auto iter = scores.begin(); iter != scores.end(); iter++)
-            std::cout << "card " << get_cardName(iter->first) << " score: " << iter->second << "\n";
+            for (auto &kv : scores)
+            {
+                card_t c = kv.first;
+                uint64_t sc = kv.second;
+                // 初始化 vector
+                if (card_scores[c].size() < (size_t)depth_limit)
+                {
+                    card_scores[c].resize(depth_limit, 0ULL);
+                }
+                card_scores[c][d - 1] = sc;
+            }
+        }
 
-        std::cout << "------------------------------------------------------------------------\n\n";
+        // 4) 现在按照 "card_scores" 打印表里的一行
+        //    行格式形如：
+        //    card_name, depth1_score, depth2_score, ...
+        // 注意：这里不再打印序号和手牌，以避免重复；你也可以保留
+        for (auto &kv : card_scores)
+        {
+            card_t c = kv.first;
+            std::vector<uint64_t> &scores_vec = kv.second;
 
-        enough++;
+            // card_name
+            std::cout << get_cardName(c);
+
+            // 打印 depth=1..depth_limit 的分数，用逗号分隔
+            for (auto sc : scores_vec)
+            {
+                std::cout << "," << sc;
+            }
+            // 每张牌打印一行
+            std::cout << "\n";
+        }
+
+        // 打印完当前手牌各项后，换行 (或加个空行) 以分隔下一副手牌
+        std::cout << "[sample end]: " << sample_index << "\n\n";
+        sample_index++;
     }
 
-    std::cout << "[test3] Finished after checking " << test_count << " random deals. \n"
-              << "Found " << enough << " hands with HCost = " << checking_H << ".\n";
+    // 最后补充一个总结信息
+    std::cout << "[test3] Finished after checking " << test_count
+              << " random deals. \nFound " << found_hands
+              << " hands with HCost = " << checking_H << ".\n";
 }
